@@ -3,14 +3,13 @@ from typing import Any
 
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import DialogManager, ShowMode
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput
 from aiogram_dialog.widgets.kbd import ManagedMultiselect, Button, Select
 
 from bot import states
-from bot.configs.questions import Question, Questions, QuestionsTypeEnum
+from bot.configs.questions import Question, Questions
 
-TEXT_SHOW_MODE = ShowMode.AUTO
 TEXT_SLEEP = 1.5
 
 
@@ -40,16 +39,6 @@ def get_on_click_multiselect_button_next(dialog_name: str) -> Any:
 
             if questions_index + 1 == len(questions):
                 await manager.switch_to(states.TestStates.results)
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.text:
-                await manager.switch_to(
-                    states.TestStates.text_question,
-                    show_mode=TEXT_SHOW_MODE,
-                )
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.select:
-                await manager.switch_to(
-                    states.TestStates.select_question,
-                    show_mode=ShowMode.AUTO,
-                )
         else:
             await callback.answer("Неверный ответ")  # type: ignore
 
@@ -73,16 +62,6 @@ def get_on_click_select(dialog_name: str) -> Any:
 
             if questions_index + 1 == len(questions):
                 await manager.switch_to(states.TestStates.results)
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.multiselect:
-                await manager.switch_to(
-                    states.TestStates.multiselect_question,
-                    show_mode=ShowMode.AUTO,
-                )
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.text:
-                await manager.switch_to(
-                    states.TestStates.text_question,
-                    show_mode=TEXT_SHOW_MODE
-                )
         else:
             await callback.answer("Неверный ответ")  # type: ignore
 
@@ -106,16 +85,6 @@ def get_text_input_handler(dialog_name: str) -> Any:
 
             if questions_index + 1 == len(questions):
                 await manager.switch_to(states.TestStates.results)
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.multiselect:
-                await manager.switch_to(
-                    states.TestStates.multiselect_question,
-                    show_mode=ShowMode.AUTO
-                )
-            elif questions[questions_index + 1].type == QuestionsTypeEnum.select:
-                await manager.switch_to(
-                    states.TestStates.select_question,
-                    show_mode=ShowMode.AUTO
-                )
         else:
             wrong_answer = True
             await message.answer("Неверный ответ")  # type: ignore
