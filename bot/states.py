@@ -2,8 +2,23 @@ from aiogram.fsm.state import StatesGroup, State
 
 
 class TestStates(StatesGroup):
+    description = State()
     test = State()
-    # text_question = State()
-    # select_question = State()
-    # multiselect_question = State()
     results = State()
+
+
+class GreetingStates(StatesGroup):
+    greeting = State()
+    auth = State()
+
+
+class MenuStates(StatesGroup):
+    menu = State()
+
+
+class StatisticStates(StatesGroup):
+    statistic = State()
+
+
+class SecretsStates(StatesGroup):
+    secrets = State()

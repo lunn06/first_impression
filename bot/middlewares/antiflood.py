@@ -6,7 +6,7 @@ from aiogram.types import TelegramObject, Message, CallbackQuery, User
 
 
 class AntiFloodMiddleware(BaseMiddleware):
-    def __init__(self, time_delta: int):
+    def __init__(self, time_delta: float):
         self.time_updates: dict[int, datetime.datetime] = {}
         self.timedelta_limiter: datetime.timedelta = datetime.timedelta(seconds=time_delta)
 

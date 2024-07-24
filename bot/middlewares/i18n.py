@@ -3,7 +3,7 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
-from fluentogram import TranslatorHub
+from fluentogram import TranslatorHub  # type: ignore
 
 logger = logging.getLogger(__name__)
 

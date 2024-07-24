@@ -5,13 +5,25 @@ from enum import StrEnum
 from glob import glob
 from typing import override, Iterator
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 from pydantic_core import from_json
 
-from bot.configs.config import parse_config, Config
+from bot.configs.config import Config
+
+
+class TestTypeEnum(StrEnum):
+    lecture = "lecture"
+    museum = "museum"
+    sport = "sport"
+    laboratory = "laboratory"
+    building = "building"
 
 
 class Questions(BaseModel):
+    name: str
+    interval: PositiveInt
+    description: str
+    type: TestTypeEnum
     questions: list["Question"]
 
     def __getitem__(self, index: int) -> Question:

@@ -12,14 +12,15 @@ aiogram-dialog = "^2"
 sqlalchemy = { extras = ["asyncio"], version = "^2" }
 environs = "^11"
 pydantic-settings = "^2"
-asyncpg = "^0.29"
 fluentogram = "^1"
 uvloop = "^0.19"
 uvicorn = "^0.30"
 fastapi = "^0.111"
 redis = "^5"
-qrcode = "^7.4.2"
-pyotp = "^2.9.0"
+qrcode = "^7"
+pyotp = "^2.9"
+aiomysql = "^0.2"
+cryptography = "^43.0.0"
 
 [tool.poetry.group.dev.dependencies]
 locust = "^2"

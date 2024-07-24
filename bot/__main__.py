@@ -9,7 +9,7 @@ from bot.polling import run_polling
 
 config = parse_config()
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
     if config.debug_mode:

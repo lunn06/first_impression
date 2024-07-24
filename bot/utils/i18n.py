@@ -1,8 +1,8 @@
 import os
 from glob import glob
 
-from fluent_compiler.bundle import FluentBundle
-from fluentogram import TranslatorHub, FluentTranslator
+from fluent_compiler.bundle import FluentBundle  # type: ignore
+from fluentogram import TranslatorHub, FluentTranslator  # type: ignore
 from pydantic import DirectoryPath
 
 from bot.configs.config import parse_config
@@ -11,7 +11,6 @@ from bot.configs.config import parse_config
 def create_translator_hub(locales_path: DirectoryPath) -> TranslatorHub:
     locales_regex = str(locales_path) + os.sep + "**" + os.sep + "*.ftl"
     filenames = [ftl_file for ftl_file in glob(locales_regex, recursive=True)]
-    print(filenames)
 
     translator_hub = TranslatorHub(
         {

@@ -13,7 +13,7 @@ class Config(BaseSettings):
 
     debug_mode: bool
     empty_db: bool
-    db_url: MySQLDsn | PostgresDsn
+    db_url: MySQLDsn
     webhook_url: str
     webhook_path: str
     port: int
@@ -21,13 +21,7 @@ class Config(BaseSettings):
     telegram_secret_token: str
     locales_path: DirectoryPath
     models_path: DirectoryPath
-    # map_path: FilePath
     admins: list[int]
-    # star_stations: list[str]
-    # stations_list: list[str]
-    # star_stations: list[str]
-    # star_station_points: int
-    # usual_station_points: int
 
     # model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
