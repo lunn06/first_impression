@@ -2,11 +2,11 @@ from aiogram_dialog import Dialog, Window, StartMode
 from aiogram_dialog.widgets.kbd import Start, Cancel
 from aiogram_dialog.widgets.text import Const
 
-from bot.states import StatisticStates, MenuStates
+from bot.states import WhereToGoStates
 
 
 def get_dialog() -> Dialog:
-    statistic_window = Window(
+    where_to_go_window = Window(
         Const("Модуль не готов"),
         Cancel(
             Const("Назад"),
@@ -15,9 +15,9 @@ def get_dialog() -> Dialog:
             # mode=StartMode.RESET_STACK,
         ),
 
-        state=StatisticStates.statistic
+        state=WhereToGoStates.where_to_go
     )
 
-    dialog = Dialog(statistic_window)
+    dialog = Dialog(where_to_go_window)
 
     return dialog

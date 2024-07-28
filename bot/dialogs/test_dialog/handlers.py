@@ -8,8 +8,21 @@ from aiogram_dialog.widgets.kbd import ManagedMultiselect, Button, Select
 
 from bot import states
 from bot.configs.questions import Question, Questions, QuestionsTypeEnum
+from bot.database.cached_requests import ensure_user_test
 
 TEXT_SLEEP = 1.5
+
+
+async def ensure_test_handler(
+        callback: CallbackQuery,
+        _widget: Button,
+        manager: DialogManager,
+):
+    session = manager.middleware_data["session"]
+    cache = manager.middleware_data["cache"]
+    test_name = manager.start_data["dialog_name"]
+    result = manager.dialog_data["result"]
+    await ensure_user_test(session, callback.from_user.id, test_name, result, cache)
 
 
 async def on_click_multiselect_button_next(
@@ -19,9 +32,9 @@ async def on_click_multiselect_button_next(
 ) -> None:
     manager.show_mode = ShowMode.AUTO
 
-    dialog_name = manager.start_data["dialog_name"]
     questions_index = manager.dialog_data.get("question_index", 0)
-    questions: Questions = manager.middleware_data["questions_dict"][dialog_name]
+    questions_json = manager.start_data["user_questions"]
+    questions = Questions.model_validate_json(questions_json)
     current_question: Question = questions[questions_index]
 
     managed_multiselect: ManagedMultiselect = manager.find("multiselect_question")  # type: ignore
@@ -61,16 +74,15 @@ async def on_click_select(
 ) -> None:
     manager.show_mode = ShowMode.AUTO
 
-    dialog_name = manager.start_data["dialog_name"]
     questions_index = manager.dialog_data.get("question_index", 0)
-    questions: Questions = manager.middleware_data["questions_dict"][dialog_name]
+    questions_json = manager.start_data["user_questions"]
+    questions = Questions.model_validate_json(questions_json)
     current_question: Question = questions[questions_index]
 
     user_answer = current_question.answers[int(clicked_item) - 1]
     if user_answer == current_question.right_answers[0]:
         tries = manager.dialog_data.get("tries", 0)
         points_per_question = manager.start_data["points_per_question"]
-        print(manager.start_data)
         if tries == 0:
             manager.start_data["scores"][str(questions_index + 1)] += points_per_question
         else:
@@ -95,9 +107,9 @@ async def text_input_handler(
 ) -> None:
     manager.show_mode = ShowMode.EDIT
 
-    dialog_name = manager.start_data["dialog_name"]
     questions_index = manager.dialog_data.get("question_index", 0)
-    questions: Questions = manager.middleware_data["questions_dict"][dialog_name]
+    questions_json = manager.start_data["user_questions"]
+    questions = Questions.model_validate_json(questions_json)
     current_question: Question = questions[questions_index]
 
     if current_question.type != QuestionsTypeEnum.text:

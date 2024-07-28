@@ -1,3 +1,4 @@
+import orjson
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -9,11 +10,11 @@ from fluentogram import TranslatorHub  # type: ignore
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
+from bot import dialogs
 from bot.configs.config import Config
-from bot.configs.questions import parse_questions_dict
+from bot.configs.questions import parse_questions_dict, Questions
 from bot.database.base import Base
 from bot.database.requests import test_connection, prepare_database
-from bot.dialogs import test_dialog, greeting, menu, statistic, secrets
 from bot.middlewares import TranslatorRunnerMiddleware, DbSessionMiddleware, AntiFloodMiddleware
 from bot.utils.i18n import create_translator_hub
 from bot.utils.secrets import Secret
@@ -29,38 +30,12 @@ async def setup_bot(config: Config) -> Bot:
     return bot
 
 
-async def setup_dp(config: Config) -> Dispatcher:
-    storage = RedisStorage(
-        redis=Redis(),
-        key_builder=DefaultKeyBuilder(with_destiny=True)
-    )  # type: ignore
-    # storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
-    questions_dict = parse_questions_dict(config)
+def setup_cache(dp: Dispatcher):
+    dragonfly = Redis(db=1)
+    dp["cache"] = dragonfly
 
-    # dp.include_routers(*get_routers())
-    # questions_names = list(questions_dict.keys())
 
-    dp.include_router(greeting.get_dialog())
-    dp.include_router(menu.get_dialog())
-    dp.include_router(statistic.get_dialog())
-    dp.include_router(secrets.get_dialog())
-    dp.include_router(test_dialog.get_dialog())
-
-    secrets_dict: dict[str, Secret] = {}
-    for questions_filename, questions in questions_dict.items():
-        secrets_dict[questions_filename] = Secret(
-            name=questions.name,
-            secret=questions_filename,
-            # handler=test_dialog.get_start_test_handler(questions_filename),
-            handler=None,
-            interval=questions.interval,
-        )
-
-    dp.message.register(greeting.start_handler, CommandStart())
-
-    setup_dialogs(dp)
-
+async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Questions]):
     engine = create_async_engine(url=str(config.db_url), echo=config.debug_mode)
 
     if config.empty_db:
@@ -77,18 +52,48 @@ async def setup_dp(config: Config) -> Dispatcher:
         if config.debug_mode:
             await prepare_database(session, questions_dict)
 
+    dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
+
+
+def setup_i18n(dp: Dispatcher, config: Config):
     translator_hub: TranslatorHub = create_translator_hub(config.locales_path)
 
     dp.update.middleware(TranslatorRunnerMiddleware())
+    dp["_translator_hub"] = translator_hub
+
+
+async def setup_dp(config: Config) -> Dispatcher:
+    storage = RedisStorage(
+        redis=Redis(),
+        key_builder=DefaultKeyBuilder(with_destiny=True),
+        # json_loads=orjson.loads,
+        # json_dumps=orjson.dumps,
+    )
+    dp = Dispatcher(storage=storage)
+    questions_dict = parse_questions_dict(config)
+
+    dp.include_routers(*dialogs.get_dialogs())
+
+    secrets_dict: dict[str, Secret] = {}
+    for questions_filename, questions in questions_dict.items():
+        secrets_dict[questions_filename] = Secret(
+            name=questions.name,
+            secret=questions_filename,
+            interval=questions.interval,
+        )
+
+    dp.message.register(greeting.start_handler, CommandStart())
+
+    setup_cache(dp)
+    setup_dialogs(dp)
+    setup_i18n(dp, config)
+    await setup_db(dp, config, questions_dict)
+
     dp.message.middleware(AntiFloodMiddleware(config.flood_awaiting))
-    dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
-    # dp.update.middleware(EnsureUserMiddleware())
-    # dp.include_routers(*get_routers())
 
     dp["config"] = config
     dp["secrets_dict"] = secrets_dict
     dp["questions_dict"] = questions_dict
-    dp["_translator_hub"] = translator_hub
 
     return dp
 

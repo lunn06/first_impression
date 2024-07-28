@@ -20,5 +20,13 @@ class StatisticStates(StatesGroup):
     statistic = State()
 
 
+class WhereToGoStates(StatesGroup):
+    where_to_go = State()
+
+
 class SecretsStates(StatesGroup):
     secrets = State()
+
+
+class BackToMenuStates(StatesGroup):
+    back_to_menu = State()

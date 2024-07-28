@@ -3,8 +3,9 @@ from aiogram_dialog.widgets.kbd import Start
 from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 from aiogram_dialog.widgets.text import Format
 
+from bot.dialogs.menu.handlers import delete_clicked_menu_button
 from bot.dialogs.menu.getters import menu_getter
-from bot.states import MenuStates, StatisticStates, SecretsStates
+from bot.states import MenuStates, StatisticStates, SecretsStates, WhereToGoStates
 
 
 def get_dialog() -> Dialog:
@@ -13,13 +14,23 @@ def get_dialog() -> Dialog:
         Start(
             Format("{start_statistics_button}"),
             id="start_statistic_section",
+            on_click=delete_clicked_menu_button,  # type: ignore
             state=StatisticStates.statistic,
+            mode=StartMode.NORMAL,
+        ),
+
+        Start(
+            Format("{start_where_to_go_button}"),
+            id="start_where_to_go_section",
+            on_click=delete_clicked_menu_button,  # type: ignore
+            state=WhereToGoStates.where_to_go,
             mode=StartMode.NORMAL,
         ),
 
         Start(
             Format("{start_secrets_button}"),
             id="start_secrets_section",
+            on_click=delete_clicked_menu_button,  # type: ignore
             state=SecretsStates.secrets,
             mode=StartMode.NORMAL,
         ),

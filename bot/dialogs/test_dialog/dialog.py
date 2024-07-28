@@ -1,4 +1,5 @@
 import operator
+import random
 
 from aiogram import F
 from aiogram.types import CallbackQuery
@@ -8,14 +9,14 @@ from aiogram_dialog.widgets.kbd import Multiselect, Select, Button, SwitchTo, St
 from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.text import List, Multi
 
-from bot import states
 from bot.configs.questions import Questions
-from bot.dialogs.test_dialog.getters import results_getter, description_getter, \
-    test_getter
-from bot.dialogs.test_dialog.handlers import (
-    on_click_multiselect_button_next, on_click_select, text_input_handler,
+from bot.dialogs.test_dialog.getters import (
+    results_getter, description_getter, test_getter
 )
-from bot.states import MenuStates
+from bot.dialogs.test_dialog.handlers import (
+    on_click_multiselect_button_next, on_click_select, text_input_handler, ensure_test_handler,
+)
+from bot.states import BackToMenuStates, TestStates, MenuStates
 
 
 def get_start_data(questions: Questions) -> dict[int, float]:
@@ -23,16 +24,35 @@ def get_start_data(questions: Questions) -> dict[int, float]:
     return data
 
 
-async def start_test_handler(_callback: CallbackQuery, dialog_manager: DialogManager, dialog_name: str):
+async def start_test_handler(
+        _callback: CallbackQuery,
+        dialog_manager: DialogManager,
+        dialog_name: str,
+) -> None:
     questions: Questions = dialog_manager.middleware_data["questions_dict"][dialog_name]
+    if isinstance(questions.guest_count, int):
+        questions_count = questions.guest_count
+    else:
+        questions_count = len(questions)
+
+    user_questions = Questions(
+        name=questions.name,
+        description=questions.description,
+        questions=random.sample(questions.questions, questions_count),
+        interval=questions.interval,
+        coast=questions.coast,
+        guest_count=questions.guest_count,
+        type=questions.type,
+    )
 
     await dialog_manager.start(
-        state=states.TestStates.description,
+        state=TestStates.description,
         data={
             "dialog_name": dialog_name,
+            "user_questions": user_questions.model_dump_json(),
             "scores": get_start_data(questions),
-            "points_per_question": 10 / len(questions),
-            "points_per_test": 10,
+            "points_per_question": questions.coast / questions_count,
+            "points_per_test": questions.coast,
         },
         mode=StartMode.NORMAL,
     )
@@ -44,11 +64,11 @@ def get_dialog() -> Dialog:
         SwitchTo(
             Format("{next_text}"),
             id="switch_to_test",
-            state=states.TestStates.test
+            state=TestStates.test
         ),
 
         getter=description_getter,
-        state=states.TestStates.description
+        state=TestStates.description
     )
 
     test_window = Window(
@@ -91,7 +111,14 @@ def get_dialog() -> Dialog:
             on_success=text_input_handler,
         ),
 
-        state=states.TestStates.test,
+        Start(
+            Format("{back_to_menu_button_text}"),
+            id="back_to_menu_button",
+            state=BackToMenuStates.back_to_menu,
+            mode=StartMode.NORMAL,
+        ),
+
+        state=TestStates.test,
         getter=test_getter
     )
 
@@ -110,10 +137,11 @@ def get_dialog() -> Dialog:
             Format("{back_to_menu_button_text}"),
             id="switch_to_main",
             state=MenuStates.menu,
-            mode=StartMode.NORMAL
+            on_click=ensure_test_handler,
+            mode=StartMode.RESET_STACK
         ),
 
-        state=states.TestStates.results,
+        state=TestStates.results,
         getter=results_getter
     )
 

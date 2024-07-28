@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from enum import StrEnum
 from glob import glob
-from typing import override, Iterator
+from typing import override, Iterator, Literal, Optional, Union
 
 from pydantic import BaseModel, PositiveInt
 from pydantic_core import from_json
@@ -22,9 +22,11 @@ class TestTypeEnum(StrEnum):
 class Questions(BaseModel):
     name: str
     interval: PositiveInt
+    coast: PositiveInt
+    guest_count: Union[PositiveInt, Literal["all"]]
     description: str
     type: TestTypeEnum
-    questions: list["Question"]
+    questions: list[Question]
 
     def __getitem__(self, index: int) -> Question:
         return self.questions[index]

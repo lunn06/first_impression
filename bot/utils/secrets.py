@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Any
 
 import qrcode  # type: ignore
 from pyotp import TOTP
@@ -14,15 +13,10 @@ class Secret:
 
     DIR = os.getcwd() + os.sep + "secrets"
 
-    def __init__(self, name: str, handler: Any, interval: int = 30, secret: str | None = None):
+    def __init__(self, name: str, interval: int = 30, secret: str | None = None):
         self.secret = name if secret is None else secret
         self.name = name
         self.totp = self._generate_secret(interval)
-        self._handler = handler
-
-    @property
-    def handler(self):
-        return self._handler
 
     def verify(self, code: str) -> bool:
         return self.totp.verify(code)

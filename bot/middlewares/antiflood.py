@@ -17,7 +17,8 @@ class AntiFloodMiddleware(BaseMiddleware):
             data: Dict[str, Any],
     ) -> Any:
         if isinstance(event, (Message, CallbackQuery)):
-            user: User = data.get('event_from_user')
+            user = data.get('event_from_user')
+            assert isinstance(user, User)
 
             if user.id in self.time_updates.keys():
                 if (datetime.datetime.now() - self.time_updates[user.id]) > self.timedelta_limiter:

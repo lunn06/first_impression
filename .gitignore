@@ -1,5 +1,7 @@
 .env
+stubs/
 
-models
+models/
+secrets/
 
 .idea

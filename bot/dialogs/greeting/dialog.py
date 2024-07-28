@@ -41,7 +41,7 @@ def get_dialog() -> Dialog:
             Format("Фальшивая"),
             id="switch_to_main",
             state=MenuStates.menu,
-            mode=StartMode.NORMAL
+            mode=StartMode.RESET_STACK
         ),
 
         state=GreetingStates.auth,

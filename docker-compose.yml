@@ -1,0 +1,99 @@
+version: '3'
+
+services:
+#  bot:
+#    build:
+#      context: .
+#    deploy:
+#      replicas: 1
+#    restart: always
+#    networks:
+#      - bot_network
+#    depends_on:
+#      - mysql
+#      - dragonfly
+#      - nats
+
+  dragonfly:
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+    # For better performance, consider `host` mode instead `port` to avoid docker NAT.
+    # `host` mode is NOT currently supported in Swarm Mode.
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
+    # network_mode: "host"
+    volumes:
+      - ./deploydata/dragonflydata:/data
+    networks:
+      - bot_network
+
+  mysql:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "9006:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: impression_db
+    volumes:
+      - ./deploydata/mysqldata:/data
+    networks:
+      - bot_network
+
+  nats:
+    image: nats:latest
+    entrypoint: /nats-server
+    command: "-c /config/server.conf"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./deploydata/nats/data:/data
+      - ./deploydata/nats/config:/config
+  
+  nats-nui:
+    image: ghcr.io/nats-nui/nui:latest
+    ports:
+      - "31311:31311"  # Порт для доступа к NATS NUI
+    volumes:
+      - ./deploydata/nui/db:/db
+    depends_on:
+      - nats
+
+volumes:
+  dragonflydata:
+    driver: local
+  mysqldata:
+    driver: local
+  nats:
+    driver: local
+  nui:
+    driver: local
+
+networks:
+  bot_network:
+    internal: true
+#
+#  nats:
+#    image: nats:latest
+#    entrypoint: /nats-server
+#    command: "-c /config/server.conf"
+#    ports:
+#      - "4222:4222"
+#      - "8222:8222"
+#    volumes:
+#      - ./nats/data:/data
+#      - ./nats/config/server.conf:/config/server.conf
+#
+#  nats-nui:
+#    image: ghcr.io/nats-nui/nui:latest
+#    container_name: nats-nui
+#    ports:
+#      - "31311:31311"  # Порт для доступа к NATS NUI
+#    volumes:
+#      - ./nui/db:/db
+#    depends_on:
+#      - nats
+#

@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, text
-from sqlalchemy.dialects.mysql import BIGINT, TIMESTAMP, TEXT, INTEGER
+from sqlalchemy.dialects.mysql import BIGINT, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.database.base import Base
@@ -32,21 +32,25 @@ class User(Base):
         nullable=False,
         server_default=utcnow()
     )
-    user_points: Mapped[int] = mapped_column(
-        INTEGER,
+    user_points: Mapped[float] = mapped_column(
         nullable=False,
-        default=0
+        default=0.
+    )
+    is_admin: Mapped[bool] = mapped_column(
+        nullable=False,
+        default=False
     )
 
 
 class Test(Base):
     __tablename__ = "tests"
-    test_id: Mapped[int] = mapped_column(
-        INTEGER,
-        primary_key=True,
-        autoincrement=True,
-    )
+    # test_id: Mapped[int] = mapped_column(
+    #     INTEGER,
+    #     primary_key=True,
+    #     autoincrement=True,
+    # )
     test_name: Mapped[str] = mapped_column(
+        primary_key=True,
         nullable=False
     )
     test_type: Mapped[str] = mapped_column(
@@ -54,14 +58,14 @@ class Test(Base):
     )
 
 
-class UserTests(Base):
+class UserTest(Base):
     __tablename__ = "user_tests"
     telegram_id: Mapped[int] = mapped_column(
         ForeignKey("users.telegram_id"),
         primary_key=True
     )
-    test_id: Mapped[str] = mapped_column(
-        ForeignKey("tests.test_id"),
+    test_name: Mapped[str] = mapped_column(
+        ForeignKey("tests.test_name"),
         primary_key=True
     )
     completed_at: Mapped[int] = mapped_column(
@@ -69,8 +73,7 @@ class UserTests(Base):
         nullable=False,
         server_default=utcnow()
     )
-    test_points: Mapped[int] = mapped_column(
-        INTEGER,
-        default=0,
+    test_points: Mapped[float] = mapped_column(
+        default=0.,
         nullable=False
     )
