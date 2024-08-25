@@ -1,9 +1,10 @@
-import orjson
+from collections import OrderedDict
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.types import WebhookInfo
 from aiogram_dialog import setup_dialogs
 from fluentogram import TranslatorHub  # type: ignore
@@ -15,8 +16,11 @@ from bot.configs.config import Config
 from bot.configs.questions import parse_questions_dict, Questions
 from bot.database.base import Base
 from bot.database.requests import test_connection, prepare_database
+from bot.dialogs import greeting
 from bot.middlewares import TranslatorRunnerMiddleware, DbSessionMiddleware, AntiFloodMiddleware
+from bot.storage.nats import NatsStorage
 from bot.utils.i18n import create_translator_hub
+from bot.utils.nats_connection import connect_to_nats
 from bot.utils.secrets import Secret
 
 
@@ -41,7 +45,7 @@ async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Que
     if config.empty_db:
         meta = Base.metadata
         async with engine.begin() as conn:
-            if config.debug_mode:
+            if config.empty_db and config.debug_mode:
                 await conn.run_sync(meta.drop_all)
             await conn.run_sync(meta.create_all)
 
@@ -49,7 +53,7 @@ async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Que
 
     async with session_maker() as session:
         await test_connection(session)
-        if config.debug_mode:
+        if config.empty_db:
             await prepare_database(session, questions_dict)
 
     dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
@@ -63,18 +67,16 @@ def setup_i18n(dp: Dispatcher, config: Config):
 
 
 async def setup_dp(config: Config) -> Dispatcher:
-    storage = RedisStorage(
-        redis=Redis(),
-        key_builder=DefaultKeyBuilder(with_destiny=True),
-        # json_loads=orjson.loads,
-        # json_dumps=orjson.dumps,
-    )
+    nats_str_servers = list(map(str, config.nats_servers))
+    nc, js = await connect_to_nats(nats_str_servers)
+    storage = await NatsStorage.init(nc, js, key_builder=DefaultKeyBuilder(with_destiny=True))
+
     dp = Dispatcher(storage=storage)
     questions_dict = parse_questions_dict(config)
 
     dp.include_routers(*dialogs.get_dialogs())
 
-    secrets_dict: dict[str, Secret] = {}
+    secrets_dict: dict[str, Secret] = OrderedDict()
     for questions_filename, questions in questions_dict.items():
         secrets_dict[questions_filename] = Secret(
             name=questions.name,
@@ -94,6 +96,7 @@ async def setup_dp(config: Config) -> Dispatcher:
     dp["config"] = config
     dp["secrets_dict"] = secrets_dict
     dp["questions_dict"] = questions_dict
+    dp["default_admins"] = config.admins
 
     return dp
 

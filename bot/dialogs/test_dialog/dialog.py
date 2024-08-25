@@ -19,8 +19,8 @@ from bot.dialogs.test_dialog.handlers import (
 from bot.states import BackToMenuStates, TestStates, MenuStates
 
 
-def get_start_data(questions: Questions) -> dict[int, float]:
-    data = {i + 1: 0. for i in range(len(questions))}
+def get_start_data(questions: Questions) -> dict[str, float]:
+    data = {str(i + 1): 0. for i in range(len(questions))}
     return data
 
 

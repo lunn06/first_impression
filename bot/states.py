@@ -30,3 +30,16 @@ class SecretsStates(StatesGroup):
 
 class BackToMenuStates(StatesGroup):
     back_to_menu = State()
+
+
+class SuperStates(StatesGroup):
+    menu = State()
+    view_secrets = State()
+    view_top = State()
+
+
+class EnsureSuperStates(StatesGroup):
+    choose_type = State()
+    ensure_super = State()
+    delete_super = State()
+    choose_tests = State()

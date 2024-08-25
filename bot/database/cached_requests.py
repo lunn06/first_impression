@@ -4,22 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database.requests import (
     ensure_user_test as nocache_ensure_user_test,
     get_user_tests as nocache_get_user_tests,
-    get_users_ids,
 )
-
-NEED_CACHE_SYNC = False
-
-
-async def sync_cache(session: AsyncSession, cache: Redis):
-    users_ids = await get_users_ids(session)
-    for user_id in users_ids:
-        user_tests = await nocache_get_user_tests(session, user_id)
-        await cache.sadd(str(user_id), *user_tests)  # type: ignore
 
 
 async def ensure_user_test(session: AsyncSession, user_id: int, test_name: str, test_points: float, cache: Redis):
-    await cache.sadd(str(user_id), test_name)  # type: ignore
     await nocache_ensure_user_test(session, user_id, test_name, test_points)
+    await cache.delete(str(user_id))
 
 
 async def get_user_tests(session: AsyncSession, user_id: int, cache: Redis) -> list[str]:

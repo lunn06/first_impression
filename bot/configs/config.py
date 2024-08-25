@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from environs import Env
-from pydantic import SecretStr, MariaDBDsn, DirectoryPath, PositiveFloat, FilePath, MySQLDsn, PostgresDsn, RedisDsn
+from pydantic import SecretStr, DirectoryPath, PositiveFloat, MySQLDsn, NatsDsn
 from pydantic_settings import BaseSettings
 
 env = Env()
@@ -14,6 +14,7 @@ class Config(BaseSettings):
     debug_mode: bool
     empty_db: bool
     db_url: MySQLDsn
+    nats_servers: list[NatsDsn]
     webhook_url: str
     webhook_path: str
     port: int

@@ -18,7 +18,7 @@ ON_MESSAGE_SLEEP = 1.5
 
 def validate_secret(text: str) -> str:
     if SECRET_RE.fullmatch(text) is not None:
-        return text
+        return ''.join(text.split())
     raise ValueError
 
 
