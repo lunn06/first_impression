@@ -1,19 +1,19 @@
-import sqlalchemy.exc
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput
 from aiogram_dialog.widgets.kbd import Select, Button, ManagedMultiselect
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.requests import ensure_super, ensure_super_tests, get_super_by_id
+from bot.database.models import Super, User
+from bot.database.requests import ensure_super, ensure_super_tests, get_super_by_user_name, get_user_by_user_name
 from bot.dialogs.admin.super_enum import SuperEnum
 from bot.states import EnsureSuperStates
 from bot.utils.secrets import Secret
 
 
-def telegram_id_validator(text: str) -> str:
-    if all(c.isdigit() for c in text):
-        return text
+def telegram_user_name_validator(text: str) -> str:
+    if text.startswith("@") or text.startswith("https://t.me/"):
+        return text.removesuffix("https://t.me/").removesuffix("@")
     raise ValueError
 
 
@@ -24,28 +24,31 @@ async def super_id_on_success(
         item: str
 ) -> None:
     session = dialog_manager.middleware_data["session"]
-    user_id = int(item)
-    dialog_manager.dialog_data["new_super_id"] = user_id
+    user_name = item
+    dialog_manager.dialog_data["new_super_user_name"] = user_name
 
     super_type = dialog_manager.dialog_data["super_type"]
     is_admin = super_type == SuperEnum.admin
     is_moderator = super_type == SuperEnum.moderator
 
-    try:
-        super_ = await get_super_by_id(session, user_id)
-        print(super_)
-        if super_ is None:
-            await ensure_super(session, user_id, is_admin, is_moderator)
-            await message.answer(f"{super_type} успешно добавлен")
-        else:
-            if super_.is_moderator:
-                dialog_manager.dialog_data["super_type"] = SuperEnum.moderator
-            elif super_.is_admin:
-                dialog_manager.dialog_data["super_type"] = SuperEnum.admin
-            await dialog_manager.switch_to(EnsureSuperStates.delete_super)
+    super_: Super | None = await get_super_by_user_name(session, user_name)
+    print(super_)
+    if super_ is None:
+        user: User | None = await get_user_by_user_name(session, user_name)
+        if user is None:
+            await message.answer("Пользователь не найден в базе данныx")
             return
-    except sqlalchemy.exc.IntegrityError:
-        await message.answer("Пользователь не найдем в базе данныx")
+
+        await ensure_super(session, user.telegram_id, is_admin, is_moderator)
+        await message.answer(f"{super_type} успешно добавлен")
+    else:
+        await message.answer(f"Этот пользователь уже {super_type}")
+        # if super_.is_moderator:
+        #     dialog_manager.dialog_data["super_type"] = SuperEnum.moderator
+        # elif super_.is_admin:
+        #     dialog_manager.dialog_data["super_type"] = SuperEnum.admin
+        # await dialog_manager.switch_to(EnsureSuperStates.delete_super)
+        return
 
     if is_moderator:
         await dialog_manager.switch_to(EnsureSuperStates.choose_tests)

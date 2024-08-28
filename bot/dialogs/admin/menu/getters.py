@@ -15,7 +15,8 @@ async def menu_getter(session: AsyncSession, dialog_manager: DialogManager, **_k
 
     return {
         "admin_menu_greeting": f"Добро пожаловать в панель {user_status}",
-        "ensure_super_button_text": "Добавить админа",
+        "ensure_super_button_text": "Добавить супер-пользователя",
+        "delete_super_button_text": "Удалить супер-пользователя",
         "view_top_button_text": "Посмотреть топ пользователей",
         "view_secrets_button_text": "Доступные коды",
         "back_to_menu_button_text": "Назад в меню",

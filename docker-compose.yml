@@ -1,18 +1,16 @@
 version: '3'
 
 services:
-#  bot:
-#    build:
-#      context: .
-#    deploy:
-#      replicas: 1
-#    restart: always
-#    networks:
-#      - bot_network
-#    depends_on:
-#      - mysql
-#      - dragonfly
-#      - nats
+  #  bot:
+  #    build:
+  #      context: .
+  #    deploy:
+  #      replicas: 1
+  #    restart: always
+  #    depends_on:
+  #      - mysql
+  #      - dragonfly
+  #      - nats
 
   dragonfly:
     image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
@@ -26,8 +24,6 @@ services:
     # network_mode: "host"
     volumes:
       - ./deploydata/dragonflydata:/data
-    networks:
-      - bot_network
 
   mysql:
     image: mysql:latest
@@ -39,8 +35,6 @@ services:
       MYSQL_DATABASE: impression_db
     volumes:
       - ./deploydata/mysqldata:/data
-    networks:
-      - bot_network
 
   nats:
     image: nats:latest
@@ -62,20 +56,16 @@ services:
     depends_on:
       - nats
 
-volumes:
-  dragonflydata:
-    driver: local
-  mysqldata:
-    driver: local
-  nats:
-    driver: local
-  nui:
-    driver: local
+#volumes:
+#  dragonflydata:
+#    driver: local
+#  mysqldata:
+#    driver: local
+#  nats:
+#    driver: local
+#  nui:
+#    driver: local
 
-networks:
-  bot_network:
-    internal: true
-#
 #  nats:
 #    image: nats:latest
 #    entrypoint: /nats-server

@@ -3,7 +3,7 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Column, Cancel, Start
 from aiogram_dialog.widgets.text import Format
 
 from bot.dialogs.admin.menu.getters import menu_getter
-from bot.states import SuperStates, EnsureSuperStates
+from bot.states import SuperStates, EnsureSuperStates, DeleteSuperStates
 
 
 def get_dialog() -> Dialog:
@@ -15,6 +15,12 @@ def get_dialog() -> Dialog:
                 Format("{ensure_super_button_text}"),
                 id="ensure_super_button",
                 state=EnsureSuperStates.choose_type,
+            ),
+
+            Start(
+                Format("{delete_super_button_text}"),
+                id="delete_super_button",
+                state=DeleteSuperStates.delete_super,
             ),
 
             SwitchTo(

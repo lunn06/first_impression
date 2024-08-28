@@ -5,13 +5,17 @@ from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.kbd import Select, Multiselect, ScrollingGroup, Button, Cancel, SwitchTo
 from aiogram_dialog.widgets.text import Format
 
-from bot.dialogs.admin.ensure_user.getters import select_super_type_getter, ensure_super_getter, choose_tests_getter, \
-    replace_super_getter
+from bot.dialogs.admin.ensure_user.getters import (
+    select_super_type_getter,
+    ensure_super_getter,
+    choose_tests_getter
+)
 from bot.dialogs.admin.ensure_user.handlers import (
-    telegram_id_validator,
+    telegram_user_name_validator,
     select_super_type_handler,
     super_id_on_success,
-    super_id_on_error, process_choose_button_handler
+    super_id_on_error,
+    process_choose_button_handler
 )
 from bot.states import EnsureSuperStates
 
@@ -37,7 +41,7 @@ def get_dialog() -> Dialog:
     ensure_super_window = Window(
         Format("{ensure_super_text}"),
         TextInput(
-            type_factory=telegram_id_validator,
+            type_factory=telegram_user_name_validator,
             on_success=super_id_on_success,
             on_error=super_id_on_error,
 
@@ -84,28 +88,8 @@ def get_dialog() -> Dialog:
         state=EnsureSuperStates.choose_tests
     )
 
-    delete_super_window = Window(
-        Format("{replace_super_text}"),
-        # Button(
-        #     Format(""),
-        #     id="delete_moderator_button",
-        #     when="is_moderator",
-        #     on_click=(),
-        # ),
-
-        SwitchTo(
-            Format("{back_button_text}"),
-            state=EnsureSuperStates.ensure_super,
-            id="back_to_ensure_super",
-        ),
-
-        getter=replace_super_getter,
-        state=EnsureSuperStates.delete_super,
-    )
-
     return Dialog(
         choose_type_window,
         ensure_super_window,
         choose_tests_window,
-        delete_super_window,
     )

@@ -1,14 +1,28 @@
 from __future__ import annotations
 
 import os
+from collections import OrderedDict
+from dataclasses import dataclass
 from enum import StrEnum
 from glob import glob
-from typing import override, Iterator, Literal, Optional, Union
+from typing import override, Iterator, Literal, Union, Any
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, PositiveInt, Field, NonNegativeFloat
 from pydantic_core import from_json
 
-from bot.configs.config import Config
+from bot.configs.config import Config, parse_config
+
+MINUTE = 60
+HOUR = MINUTE * 60
+DAY = 24 * HOUR
+
+
+@dataclass
+class Defaults:
+    decrease: float
+    interval: int
+    coast: int
+    limit: int
 
 
 class TestTypeEnum(StrEnum):
@@ -18,14 +32,58 @@ class TestTypeEnum(StrEnum):
     laboratory = "laboratory"
     building = "building"
 
+    def default(self):
+        match self:
+            case self.lecture:
+                return Defaults(
+                    decrease=0,
+                    interval=int(HOUR * 1.5),
+                    coast=0,
+                    limit=50,
+                )
+            case self.museum:
+                return Defaults(
+                    decrease=0.01,
+                    interval=DAY,
+                    coast=0,
+                    limit=50,
+                )
+            case self.sport:
+                return Defaults(
+                    decrease=0,
+                    interval=HOUR,
+                    coast=0,
+                    limit=50,
+                )
+            case self.laboratory:
+                return Defaults(
+                    decrease=0.01,
+                    interval=DAY,
+                    coast=0,
+                    limit=50,
+                )
+            case self.museum:
+                return Defaults(
+                    decrease=0.1,
+                    interval=int(HOUR * 1.5),
+                    coast=0,
+                    limit=50,
+                )
+
 
 class Questions(BaseModel):
     name: str
+    description: str
+    type: TestTypeEnum
+    location: str
+    audience: str
+
     interval: PositiveInt
     coast: PositiveInt
     guest_count: Union[PositiveInt, Literal["all"]]
-    description: str
-    type: TestTypeEnum
+    decrease: NonNegativeFloat
+    limit: PositiveInt = Field(ge=0, le=100, default=50)
+
     questions: list[Question]
 
     def __getitem__(self, index: int) -> Question:
@@ -52,9 +110,7 @@ class QuestionsTypeEnum(StrEnum):
     text = "text"
 
 
-def _questions_from_json(test_path: str) -> Questions:
-    with open(test_path, 'r') as json_file:
-        questions_json = from_json(json_file.read(), cache_strings=True)
+def _questions_from_json(questions_json: dict[Any, Any]) -> Questions:
     questions = Questions.model_validate(questions_json)
 
     return questions
@@ -73,17 +129,44 @@ def _json_name(json_path: str) -> str:
     return json_name
 
 
+def _prepare_json(json: dict[Any, Any]) -> None:
+    event_type = TestTypeEnum[json["type"]]
+    defaults = event_type.default()
+
+    if isinstance(json["guest_count"], int) and json["guest_count"] > len(json["questions"]):
+        raise ValueError("guest_count > len(questions)")
+
+    if json.get("decrease", None) is None:
+        json["decrease"] = defaults.decrease
+
+    if json.get("interval", None) is None:
+        json["interval"] = defaults.interval
+
+    if json.get("coast", None) is None:
+        json["coast"] = defaults.coast
+
+    if json.get("limit", None) is None:
+        json["limit"] = defaults.limit
+
+
 def parse_questions_dict(config: Config) -> dict[str, "Questions"]:
     questions_path = _tests_path(str(config.models_path))
 
-    questions: dict[str, "Questions"] = {}
+    questions: dict[str, Questions] = OrderedDict()
     for questions_json_path in glob(questions_path + "*"):
         questions_json_name = _json_name(questions_json_path)
-        questions_model = _questions_from_json(questions_json_path)
+
+        with open(questions_json_path, 'r') as json_file:
+            questions_json: dict[Any, Any] = from_json(json_file.read(), cache_strings=True)
+        _prepare_json(questions_json)
+        questions_model = _questions_from_json(questions_json)
+
         questions[questions_json_name] = questions_model
 
     return questions
 
 
 if __name__ == '__main__':
-    ...
+    config = parse_config()
+    q = parse_questions_dict(config)
+    print(dir())

@@ -12,5 +12,5 @@ async def auth_getter(dialog_manager: DialogManager, **_kwargs):
     return {
         "text": "Для начала нужно авторизоваться!",
         "url_text": "Авторизоваться",
-        "url": "https://tpu.ru"
+        "url": "https://tpu.ru"  # TODO: перенести в конфиг
     }

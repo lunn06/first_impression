@@ -1,5 +1,6 @@
 import operator
 import random
+from copy import deepcopy
 
 from aiogram import F
 from aiogram.types import CallbackQuery
@@ -35,15 +36,8 @@ async def start_test_handler(
     else:
         questions_count = len(questions)
 
-    user_questions = Questions(
-        name=questions.name,
-        description=questions.description,
-        questions=random.sample(questions.questions, questions_count),
-        interval=questions.interval,
-        coast=questions.coast,
-        guest_count=questions.guest_count,
-        type=questions.type,
-    )
+    user_questions = deepcopy(questions)
+    user_questions.questions = random.sample(questions.questions, questions_count)
 
     await dialog_manager.start(
         state=TestStates.description,

@@ -21,7 +21,9 @@ class StatisticStates(StatesGroup):
 
 
 class WhereToGoStates(StatesGroup):
-    where_to_go = State()
+    locations = State()
+    audiences = State()
+    description = State()
 
 
 class SecretsStates(StatesGroup):
@@ -41,5 +43,8 @@ class SuperStates(StatesGroup):
 class EnsureSuperStates(StatesGroup):
     choose_type = State()
     ensure_super = State()
-    delete_super = State()
     choose_tests = State()
+
+
+class DeleteSuperStates(StatesGroup):
+    delete_super = State()

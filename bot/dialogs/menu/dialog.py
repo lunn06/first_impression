@@ -33,7 +33,7 @@ def get_dialog() -> Dialog:
             Format("{start_where_to_go_button}"),
             id="start_where_to_go_section",
             # on_click=delete_clicked_menu_button,  # type: ignore
-            state=WhereToGoStates.where_to_go,
+            state=WhereToGoStates.locations,
             mode=StartMode.NORMAL,
         ),
 

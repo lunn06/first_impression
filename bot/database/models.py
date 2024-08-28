@@ -1,23 +1,12 @@
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, text
+from typing import Optional
+
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.dialects.mysql import BIGINT, TIMESTAMP, BOOLEAN
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.database.base import Base
-
-
-# class utcnow(expression.FunctionElement):
-#     type = DateTime()
-#     inherit_cache = True
-# 
-# 
-# @compiles(utcnow, 'mysql')
-# def mysql_utcnow(_element, _compiler, **_kwargs):
-#     return "text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')"
-
-def utcnow():
-    return text('CURRENT_TIMESTAMP')
 
 
 class User(Base):
@@ -26,27 +15,37 @@ class User(Base):
         BIGINT,
         primary_key=True
     )
-    user_name: Mapped[str] = mapped_column(
+    user_name: Mapped[Optional[str]] = mapped_column(
         nullable=True
     )
     registered_at: Mapped[int] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,
-        server_default=utcnow()
+        server_default=func.now()
     )
     user_points: Mapped[float] = mapped_column(
         nullable=False,
         default=0.
     )
 
-    tests: Mapped[list[UserTest]] = relationship(back_populates="user")
+    # super_id: Mapped[Optional[int]] = mapped_column(
+    #     ForeignKey("supers.super_id")
+    # )
+
+    # tests: Mapped[list[UserTest]] = relationship(back_populates="user")
+    # super_: Mapped[Optional[Super]] = relationship(back_populates="user", viewonly=True)
 
 
 class Super(Base):
     __tablename__ = "supers"
+    # super_id: Mapped[int] = mapped_column(
+    #     primary_key=True,
+    #     autoincrement=True,
+    # )
+
     telegram_id: Mapped[int] = mapped_column(
-        ForeignKey("users.telegram_id"),
-        primary_key=True
+        ForeignKey(User.telegram_id),
+        primary_key=True,
     )
     is_admin: Mapped[bool] = mapped_column(
         BOOLEAN,
@@ -59,7 +58,8 @@ class Super(Base):
         default=False
     )
 
-    tests: Mapped[list[SuperTest]] = relationship(back_populates="super")
+    # user: Mapped[User] = relationship(back_populates="super_", viewonly=True)
+    # tests: Mapped[list[SuperTest]] = relationship(back_populates="super_", viewonly=True)
 
 
 class Test(Base):
@@ -76,44 +76,44 @@ class Test(Base):
         nullable=False
     )
 
-    users: Mapped[list[UserTest]] = relationship(back_populates="test")
-    supers: Mapped[list[SuperTest]] = relationship(back_populates="test")
+    # users: Mapped[list[UserTest]] = relationship(back_populates="test")
+    # supers: Mapped[list[SuperTest]] = relationship(back_populates="test")
 
 
 class SuperTest(Base):
     __tablename__ = "super_tests"
-    telegram_id: Mapped[int] = mapped_column(
-        ForeignKey("supers.telegram_id"),
+    super_id: Mapped[int] = mapped_column(
+        ForeignKey(Super.telegram_id),
         primary_key=True
     )
     test_name: Mapped[str] = mapped_column(
-        ForeignKey("tests.test_name"),
+        ForeignKey(Test.test_name),
         primary_key=True
     )
 
-    super: Mapped[Super] = relationship(back_populates="tests")
-    test: Mapped[Test] = relationship(back_populates="supers")
+    # super_: Mapped[Super] = relationship(back_populates="tests")
+    # test: Mapped[Test] = relationship(back_populates="supers")
 
 
 class UserTest(Base):
     __tablename__ = "user_tests"
     telegram_id: Mapped[int] = mapped_column(
-        ForeignKey("users.telegram_id"),
+        ForeignKey(User.telegram_id),
         primary_key=True
     )
     test_name: Mapped[str] = mapped_column(
-        ForeignKey("tests.test_name"),
+        ForeignKey(Test.test_name),
         primary_key=True
     )
     completed_at: Mapped[int] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,
-        server_default=utcnow()
+        server_default=func.now()
     )
     test_points: Mapped[float] = mapped_column(
         default=0.,
         nullable=False
     )
 
-    user: Mapped[User] = relationship(back_populates="tests")
-    test: Mapped[Test] = relationship(back_populates="users")
+    # user: Mapped[User] = relationship(back_populates="tests")
+    # test: Mapped[Test] = relationship(back_populates="users")

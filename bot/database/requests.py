@@ -23,13 +23,25 @@ async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
 
 
 async def get_super_by_id(session: AsyncSession, user_id: int) -> Super | None:
-    stmt = select(Super).where(Super.telegram_id == user_id)
+    stmt = select(Super).join(User).where(User.telegram_id == user_id)
+
+    return await session.scalar(stmt)
+
+
+async def get_super_by_user_name(session: AsyncSession, user_name: str) -> Super | None:
+    stmt = select(Super).join(User).where(User.user_name == user_name)
+
+    return await session.scalar(stmt)
+
+
+async def get_user_by_user_name(session: AsyncSession, user_name: str) -> User | None:
+    stmt = select(User).where(User.user_name == user_name)
 
     return await session.scalar(stmt)
 
 
 async def get_user_tests(session: AsyncSession, user_id: int) -> list[str]:
-    stmt = select(User.tests).where(User.telegram_id == user_id)
+    stmt = select(UserTest).where(UserTest.telegram_id == user_id)
     res = await session.execute(stmt)
 
     user_tests = [r[0] for r in res]
@@ -38,21 +50,28 @@ async def get_user_tests(session: AsyncSession, user_id: int) -> list[str]:
 
 
 async def get_admins_ids(session: AsyncSession) -> list[int]:
-    stmt = select(Super.telegram_id).where(Super.is_admin)
+    stmt = select(User.telegram_id).join(Super).where(Super.is_admin)
     res = await session.execute(stmt)
 
     return [r[0] for r in res]
 
 
 async def get_moderators_ids(session: AsyncSession) -> list[int]:
-    stmt = select(Super.telegram_id).where(Super.is_moderator)
+    stmt = select(User.telegram_id).join(Super).where(Super.is_moderator)
     res = await session.execute(stmt)
 
     return [r[0] for r in res]
 
 
-async def get_supers_ids(session: AsyncSession) -> list[User]:
-    stmt = select(Super.telegram_id).where(or_(Super.is_moderator, Super.is_admin))
+async def get_supers_ids(session: AsyncSession) -> list[int]:
+    stmt = select(User.telegram_id).join(Super).where(or_(Super.is_moderator, Super.is_admin))
+    res = await session.execute(stmt)
+
+    return [r[0] for r in res]
+
+
+async def get_supers(session: AsyncSession) -> list[Super]:
+    stmt = select(Super).where(or_(Super.is_moderator, Super.is_admin))
     res = await session.execute(stmt)
 
     return [r[0] for r in res]
