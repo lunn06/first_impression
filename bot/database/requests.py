@@ -1,11 +1,14 @@
+import decimal
 from typing import Optional
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.configs.questions import Questions
 from bot.database import User, UserTest, Test
 from bot.database.models import Super, SuperTest
+from configs import Questions
+
+decimal.getcontext().prec = 3
 
 
 async def prepare_database(session: AsyncSession, questions_dict: dict[str, Questions]):
@@ -49,6 +52,15 @@ async def get_user_tests(session: AsyncSession, user_id: int) -> list[str]:
     return user_tests
 
 
+async def get_super_tests(session: AsyncSession, user_id: int) -> list[str]:
+    stmt = select(SuperTest.test_name).where(SuperTest.telegram_id == user_id)
+    res = await session.execute(stmt)
+
+    super_tests = [r[0] for r in res]
+
+    return super_tests
+
+
 async def get_admins_ids(session: AsyncSession) -> list[int]:
     stmt = select(User.telegram_id).join(Super).where(Super.is_admin)
     res = await session.execute(stmt)
@@ -84,8 +96,8 @@ async def get_users_ids(session: AsyncSession) -> list[int]:
     return [r[0] for r in res]
 
 
-async def get_top_users(session: AsyncSession) -> list[int]:
-    stmt = select(User.telegram_id).order_by(User.user_points)
+async def get_top_users(session: AsyncSession, limit=10) -> list[User]:
+    stmt = select(User).order_by(User.user_points.desc()).limit(limit)
     res = await session.execute(stmt)
 
     return [r[0] for r in res]
@@ -136,12 +148,22 @@ async def ensure_user(
 
 
 async def ensure_user_test(session: AsyncSession, user_id: int, test_name: str, test_points: float) -> None:
-    existed_user_test = await get_test_by_name(session, test_name)
-    if existed_user_test is None:
+    existed_test = await get_test_by_name(session, test_name)
+    if existed_test is None:
         return
 
-    user_test = UserTest(telegram_id=user_id, test_name=test_name, test_points=test_points)
+    existing_user = await get_user_by_id(session, user_id)
+    if existing_user is None:
+        return
+
+    test_points_decimal = decimal.Decimal(test_points)
+
+    existing_user.user_points += test_points_decimal
+    existed_test.complete_count += 1
+
+    user_test = UserTest(telegram_id=user_id, test_name=test_name, test_points=test_points_decimal)
     session.add(user_test)
+
     await session.commit()
 
 

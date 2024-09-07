@@ -5,7 +5,7 @@ from fluent_compiler.bundle import FluentBundle  # type: ignore
 from fluentogram import TranslatorHub, FluentTranslator  # type: ignore
 from pydantic import DirectoryPath
 
-from bot.configs.config import parse_config
+from configs.config import parse_config
 
 
 def create_translator_hub(locales_path: DirectoryPath) -> TranslatorHub:

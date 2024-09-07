@@ -1,15 +1,38 @@
 import operator
 
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.kbd import Cancel, ScrollingGroup, Select, SwitchTo
+from aiogram_dialog.widgets.kbd import Cancel, ScrollingGroup, Select, SwitchTo, Group
 from aiogram_dialog.widgets.text import Const, Format
 
-from bot.dialogs.where_to_go.getters import locations_getter, audiences_getter, description_getter
-from bot.dialogs.where_to_go.handlers import select_locations_on_click, select_audience_on_click
+from bot.dialogs.where_to_go.getters import locations_getter, audiences_getter, description_getter, types_getter
+from bot.dialogs.where_to_go.handlers import select_locations_on_click, select_audience_on_click, select_types_on_click
 from bot.states import WhereToGoStates
 
 
 def get_dialog() -> Dialog:
+    types_window = Window(
+        Format("{text}"),
+
+        Group(
+            Select(
+                Format("{item[1]}"),
+                items="types",
+                item_id_getter=operator.itemgetter(0),
+                id="select_types",
+                on_click=select_types_on_click
+            ),
+            width=2,
+        ),
+
+        Cancel(
+            Format("{back_to_menu_button_text}"),
+            id="back_to_menu",
+        ),
+
+        getter=types_getter,
+        state=WhereToGoStates.types,
+    )
+
     locations_window = Window(
         Format("{text}"),
 
@@ -26,10 +49,10 @@ def get_dialog() -> Dialog:
             id="scrolling_locations"
         ),
 
-        Cancel(
+        SwitchTo(
             Const("Назад"),
-            id="switch_to_menu",
-            # state=MenuStates.menu,
+            id="back_to_types",
+            state=WhereToGoStates.types,
             # mode=StartMode.RESET_STACK,
         ),
 
@@ -76,6 +99,7 @@ def get_dialog() -> Dialog:
     )
 
     dialog = Dialog(
+        types_window,
         locations_window,
         audiences_window,
         description_window,

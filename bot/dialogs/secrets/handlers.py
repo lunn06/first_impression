@@ -8,9 +8,9 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.cached_requests import get_user_tests
+from bot.database.requests import get_user_tests
 from bot.dialogs.test_dialog.dialog import start_test_handler
-from bot.utils.secrets import Secret
+from utils.secrets import Secret
 
 SECRET_RE = re.compile(r"(^\d{6}$)|(^\d{3} \d{3}$)|(^\d{2} \d{2} \d{2}$)")
 ON_MESSAGE_SLEEP = 1.5
@@ -37,7 +37,7 @@ async def text_input_on_success(
     wrong = False
     for dialog_name, secret in secrets_dict.items():
         if secret.verify(text):
-            user_tests = await get_user_tests(session, message.from_user.id, cache)
+            user_tests = await get_user_tests(session, message.from_user.id)
             if dialog_name in user_tests:
                 await message.answer("Это точку ты уже проходил!")
                 wrong = True

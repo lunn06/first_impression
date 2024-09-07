@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import os
-from collections import OrderedDict
 from dataclasses import dataclass
 from enum import StrEnum
 from glob import glob
 from typing import override, Iterator, Literal, Union, Any
 
-from pydantic import BaseModel, PositiveInt, Field, NonNegativeFloat
+from pydantic import BaseModel, PositiveInt, Field, NonNegativeFloat, PositiveFloat
 from pydantic_core import from_json
 
-from bot.configs.config import Config, parse_config
+from configs.config import Config
+from utils.last_updated_ordered_dict import LastUpdatedOrderedDict
 
 MINUTE = 60
 HOUR = MINUTE * 60
@@ -31,6 +31,19 @@ class TestTypeEnum(StrEnum):
     sport = "sport"
     laboratory = "laboratory"
     building = "building"
+
+    def on_russian(self):
+        match self:
+            case self.lecture:
+                return "Лекция"
+            case self.museum:
+                return "Музей"
+            case self.sport:
+                return "Спорт"
+            case self.laboratory:
+                return "Лаборатория"
+            case self.building:
+                return "Корпус"
 
     def default(self):
         match self:
@@ -62,10 +75,10 @@ class TestTypeEnum(StrEnum):
                     coast=0,
                     limit=50,
                 )
-            case self.museum:
+            case self.building:
                 return Defaults(
-                    decrease=0.1,
-                    interval=int(HOUR * 1.5),
+                    decrease=0.01,
+                    interval=DAY,
                     coast=0,
                     limit=50,
                 )
@@ -79,7 +92,7 @@ class Questions(BaseModel):
     audience: str
 
     interval: PositiveInt
-    coast: PositiveInt
+    coast: PositiveFloat
     guest_count: Union[PositiveInt, Literal["all"]]
     decrease: NonNegativeFloat
     limit: PositiveInt = Field(ge=0, le=100, default=50)
@@ -152,7 +165,7 @@ def _prepare_json(json: dict[Any, Any]) -> None:
 def parse_questions_dict(config: Config) -> dict[str, "Questions"]:
     questions_path = _tests_path(str(config.models_path))
 
-    questions: dict[str, Questions] = OrderedDict()
+    questions: dict[str, Questions] = LastUpdatedOrderedDict()
     for questions_json_path in glob(questions_path + "*"):
         questions_json_name = _json_name(questions_json_path)
 
@@ -165,8 +178,5 @@ def parse_questions_dict(config: Config) -> dict[str, "Questions"]:
 
     return questions
 
-
-if __name__ == '__main__':
-    config = parse_config()
-    q = parse_questions_dict(config)
-    print(dir())
+# if __name__ == '__main__':
+#     ...

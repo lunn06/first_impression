@@ -8,16 +8,18 @@ from bot.database.models import Super, User
 from bot.database.requests import ensure_super, ensure_super_tests, get_super_by_user_name, get_user_by_user_name
 from bot.dialogs.admin.super_enum import SuperEnum
 from bot.states import EnsureSuperStates
-from bot.utils.secrets import Secret
+from utils.secrets import Secret
 
 
 def telegram_user_name_validator(text: str) -> str:
     if text.startswith("@") or text.startswith("https://t.me/"):
-        return text.removesuffix("https://t.me/").removesuffix("@")
+        unsecure_text = text.removeprefix("https://t.me/").removeprefix("@")
+        if all(c.isalnum() or c == '_' for c in unsecure_text):  # SQLInjection check
+            return unsecure_text
     raise ValueError
 
 
-async def super_id_on_success(
+async def super_name_on_success(
         message: Message,
         _text_input: ManagedTextInput,
         dialog_manager: DialogManager,
@@ -39,6 +41,7 @@ async def super_id_on_success(
             await message.answer("Пользователь не найден в базе данныx")
             return
 
+        dialog_manager.dialog_data["new_super_id"] = user.telegram_id
         await ensure_super(session, user.telegram_id, is_admin, is_moderator)
         await message.answer(f"{super_type} успешно добавлен")
     else:
@@ -54,13 +57,13 @@ async def super_id_on_success(
         await dialog_manager.switch_to(EnsureSuperStates.choose_tests)
 
 
-async def super_id_on_error(
+async def super_name_on_error(
         message: Message,
         _text_input: ManagedTextInput,
         _dialog_manager: DialogManager,
         _error,
 ) -> None:
-    await message.answer("Это не телеграм id")
+    await message.answer('Имя в телеграм должно начинаться с "@" или с "https://t.me/"')
 
 
 async def select_super_type_handler(
@@ -97,8 +100,6 @@ async def process_choose_button_handler(
         lambda x: tests[int(x)],
         managed_multiselect.get_checked()
     ))
-
-    print(chosen_tests)
 
     await ensure_super_tests(session, new_super_id, chosen_tests)
     await dialog_manager.switch_to(EnsureSuperStates.ensure_super)

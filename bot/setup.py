@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -8,20 +6,24 @@ from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.types import WebhookInfo
 from aiogram_dialog import setup_dialogs
 from fluentogram import TranslatorHub  # type: ignore
+from nats.aio.client import Client
+from nats.js import JetStreamContext
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from bot import dialogs
-from bot.configs.config import Config
-from bot.configs.questions import parse_questions_dict, Questions
 from bot.database.base import Base
 from bot.database.requests import test_connection, prepare_database
 from bot.dialogs import greeting
 from bot.middlewares import TranslatorRunnerMiddleware, DbSessionMiddleware, AntiFloodMiddleware
 from bot.storage.nats import NatsStorage
-from bot.utils.i18n import create_translator_hub
-from bot.utils.nats_connection import connect_to_nats
-from bot.utils.secrets import Secret
+from configs import parse_questions_dict, Questions
+from configs.config import Config
+from services.notifications.publisher import NotificationsPublisher
+from utils.i18n import create_translator_hub
+from utils.last_updated_ordered_dict import LastUpdatedOrderedDict
+from utils.nats_connection import connect_to_nats
+from utils.secrets import Secret
 
 
 async def setup_bot(config: Config) -> Bot:
@@ -39,7 +41,7 @@ def setup_cache(dp: Dispatcher):
     dp["cache"] = dragonfly
 
 
-async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Questions]):
+async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Questions]) -> async_sessionmaker:
     engine = create_async_engine(url=str(config.db_url), echo=config.debug_mode)
 
     if config.empty_db:
@@ -58,6 +60,8 @@ async def setup_db(dp: Dispatcher, config: Config, questions_dict: dict[str, Que
 
     dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
 
+    return session_maker
+
 
 def setup_i18n(dp: Dispatcher, config: Config):
     translator_hub: TranslatorHub = create_translator_hub(config.locales_path)
@@ -66,7 +70,25 @@ def setup_i18n(dp: Dispatcher, config: Config):
     dp["_translator_hub"] = translator_hub
 
 
-async def setup_dp(config: Config) -> Dispatcher:
+async def setup_notifications(
+        dp: Dispatcher,
+        config: Config,
+        nc: Client,
+        session_maker: async_sessionmaker
+):
+    notifications_publisher = NotificationsPublisher(
+        nc=nc,
+        subject=config.nats_notifications_consumer_subject,
+        delay=config.nats_notifications_delay,
+        session_maker=session_maker,
+    )
+
+    # await notifications_publisher.init()
+
+    dp["notifications_publisher"] = notifications_publisher
+
+
+async def setup(config: Config) -> (Dispatcher, Client, JetStreamContext):
     nats_str_servers = list(map(str, config.nats_servers))
     nc, js = await connect_to_nats(nats_str_servers)
     storage = await NatsStorage.init(nc, js, key_builder=DefaultKeyBuilder(with_destiny=True))
@@ -76,7 +98,7 @@ async def setup_dp(config: Config) -> Dispatcher:
 
     dp.include_routers(*dialogs.get_dialogs())
 
-    secrets_dict: dict[str, Secret] = OrderedDict()
+    secrets_dict: dict[str, Secret] = LastUpdatedOrderedDict()
     for questions_filename, questions in questions_dict.items():
         secrets_dict[questions_filename] = Secret(
             name=questions.name,
@@ -89,7 +111,8 @@ async def setup_dp(config: Config) -> Dispatcher:
     setup_cache(dp)
     setup_dialogs(dp)
     setup_i18n(dp, config)
-    await setup_db(dp, config, questions_dict)
+    session_maker = await setup_db(dp, config, questions_dict)
+    await setup_notifications(dp, config, nc, session_maker)
 
     dp.message.middleware(AntiFloodMiddleware(config.flood_awaiting))
 
@@ -98,7 +121,7 @@ async def setup_dp(config: Config) -> Dispatcher:
     dp["questions_dict"] = questions_dict
     dp["default_admins"] = config.admins
 
-    return dp
+    return dp, nc, js, session_maker
 
 
 async def setup_webhook(bot: Bot, config: Config, logger) -> None:

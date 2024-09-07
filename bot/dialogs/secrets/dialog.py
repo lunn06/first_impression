@@ -1,11 +1,11 @@
-from aiogram_dialog import Dialog, Window, StartMode
+from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput
-from aiogram_dialog.widgets.kbd import Start, Cancel
+from aiogram_dialog.widgets.kbd import Cancel
 from aiogram_dialog.widgets.text import Format
 
-from bot.dialogs.secrets.handlers import validate_secret, text_input_on_error, text_input_on_success
 from bot.dialogs.secrets.getters import secrets_getter
-from bot.states import MenuStates, SecretsStates
+from bot.dialogs.secrets.handlers import validate_secret, text_input_on_error, text_input_on_success
+from bot.states import SecretsStates
 
 
 def get_dialog() -> Dialog:

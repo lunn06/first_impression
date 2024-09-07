@@ -3,7 +3,7 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Column, Cancel, Start
 from aiogram_dialog.widgets.text import Format
 
 from bot.dialogs.admin.menu.getters import menu_getter
-from bot.states import SuperStates, EnsureSuperStates, DeleteSuperStates
+from bot.states import SuperStates, EnsureSuperStates, DeleteSuperStates, ViewSecretsStates
 
 
 def get_dialog() -> Dialog:
@@ -32,10 +32,10 @@ def get_dialog() -> Dialog:
             when="is_admin",
         ),
 
-        SwitchTo(
+        Start(
             Format("{view_secrets_button_text}"),
             id="view_secrets_button",
-            state=SuperStates.view_secrets,
+            state=ViewSecretsStates.user_secrets,
         ),
 
         Cancel(
@@ -44,11 +44,6 @@ def get_dialog() -> Dialog:
 
         getter=menu_getter,
         state=SuperStates.menu,
-
-        # markup_factory=ReplyKeyboardFactory(
-        #     resize_keyboard=True,
-        #     one_time_keyboard=True,
-        # )
     )
 
     return Dialog(

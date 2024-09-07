@@ -4,8 +4,8 @@ import uvicorn
 import uvloop
 
 from bot.app import get_app
-from bot.configs.config import parse_config
 from bot.polling import run_polling
+from configs.config import parse_config
 
 config = parse_config()
 logger = logging.getLogger(__name__)

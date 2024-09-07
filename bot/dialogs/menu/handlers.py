@@ -1,4 +1,3 @@
-from aiogram.types import Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.internal import ReplyCallbackQuery
 from aiogram_dialog.widgets.kbd import Start

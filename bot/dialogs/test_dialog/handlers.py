@@ -1,16 +1,15 @@
-import asyncio
-
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import ManagedTextInput
-from aiogram_dialog.widgets.kbd import ManagedMultiselect, Button, Select
+from aiogram_dialog.widgets.kbd import ManagedMultiselect, Button, Select, Start
 
 from bot import states
-from bot.configs.questions import Question, Questions, QuestionsTypeEnum
 from bot.database.requests import ensure_user_test
+from configs import Question, Questions, QuestionsTypeEnum
 
-TEXT_SLEEP = 1.5
+
+# TEXT_SLEEP = 1.5
 
 
 async def ensure_test_handler(
@@ -26,7 +25,7 @@ async def ensure_test_handler(
 
 
 async def on_click_multiselect_button_next(
-        callback: CallbackQuery,
+        _callback: CallbackQuery,
         _widget: Button,
         manager: DialogManager,
 ) -> None:
@@ -45,12 +44,10 @@ async def on_click_multiselect_button_next(
         managed_multiselect.get_checked()
     )
 
-    points_per_question = manager.start_data["points_per_question"]
-    right_count = len(current_question.right_answers)
-
+    test_right_count = len(current_question.right_answers)
     for right_answer in current_question.right_answers:
         if right_answer in checked:
-            manager.start_data["scores"][str(questions_index + 1)] += points_per_question / right_count
+            manager.start_data["right_answers"][str(questions_index + 1)] += 1 / test_right_count
 
     manager.dialog_data["question_index"] = questions_index + 1
     if questions_index + 1 == len(questions):
@@ -58,7 +55,7 @@ async def on_click_multiselect_button_next(
 
 
 async def on_click_select(
-        callback: CallbackQuery,
+        _callback: CallbackQuery,
         _widget: Select,
         manager: DialogManager,
         clicked_item: str
@@ -72,8 +69,9 @@ async def on_click_select(
 
     user_answer = current_question.answers[int(clicked_item) - 1]
     if user_answer == current_question.right_answers[0]:
-        points_per_question = manager.start_data["points_per_question"]
-        manager.start_data["scores"][str(questions_index + 1)] += points_per_question
+        # points_per_question = manager.start_data["points_per_question"]
+        # manager.start_data["scores"][str(questions_index + 1)] += points_per_question
+        manager.start_data["right_answers"][str(questions_index + 1)] = 1
 
     manager.dialog_data["question_index"] = questions_index + 1
     if questions_index + 1 == len(questions):
@@ -98,17 +96,22 @@ async def text_input_handler(
         return
 
     if text.lower().strip() == current_question.right_answers[0].lower():
-        points_per_question = manager.start_data["points_per_question"]
-        manager.start_data["scores"][str(questions_index + 1)] += points_per_question
+        # points_per_question = manager.start_data["points_per_question"]
+        # manager.start_data["scores"][str(questions_index + 1)] += points_per_question
+        manager.start_data["right_answers"][str(questions_index + 1)] = 1
+
+    bot: Bot = manager.middleware_data["bot"]
+    await bot.delete_message(message.from_user.id, message.message_id)  # type: ignore
 
     manager.dialog_data["question_index"] = questions_index + 1
 
     if questions_index + 1 == len(questions):
         await manager.switch_to(states.TestStates.results)
 
-    bot: Bot = manager.middleware_data["bot"]
 
-    to_delete_messages = [message.message_id]
-
-    await asyncio.sleep(TEXT_SLEEP)
-    await bot.delete_messages(message.from_user.id, to_delete_messages)  # type: ignore
+async def process_back_to_menu_button(
+        _callback: CallbackQuery,
+        start_widget: Start,
+        manager: DialogManager,
+):
+    start_widget.start_data = manager.start_data

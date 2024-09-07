@@ -1,9 +1,9 @@
 from typing import Literal
 
-    
+
 class TranslatorRunner:
     def get(self, path: str, **kwargs) -> str: ...
-    
+
     last: Last
     start: Start
     infocard: Infocard
@@ -73,7 +73,8 @@ class Wheretogo:
 
 class Statistics:
     @staticmethod
-    def message(*, points, lottery) -> Literal["""Твои очки: { $points }. Номер лотерейного билета: { $lottery }"""]: ...
+    def message(*, points, lottery) -> Literal[
+        """Твои очки: { $points }. Номер лотерейного билета: { $lottery }"""]: ...
 
     @staticmethod
     def button() -> Literal["""🤩 Моя статистика"""]: ...
@@ -93,7 +94,8 @@ class Superstar:
 
 class Unexpected:
     @staticmethod
-    def message() -> Literal["""Я тебя не понимаю 😢 Воспользуйся кнопкой &#34;Помощь&#34;, чтобы узнать, что я могу"""]: ...
+    def message() -> Literal[
+        """Я тебя не понимаю 😢 Воспользуйся кнопкой &#34;Помощь&#34;, чтобы узнать, что я могу"""]: ...
 
 
 class Help:
@@ -266,4 +268,3 @@ class Undone:
 class Done:
     @staticmethod
     def station(*, station_name, description) -> Literal["""✅ { $station_name } - { $description }"""]: ...
-

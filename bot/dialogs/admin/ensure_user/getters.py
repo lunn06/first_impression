@@ -1,9 +1,7 @@
-from aiogram.types import User
 from aiogram_dialog import DialogManager
 
-from bot.database.requests import get_supers
 from bot.dialogs.admin.super_enum import SuperEnum
-from bot.utils.secrets import Secret
+from utils.secrets import Secret
 
 
 async def select_super_type_getter(**_kwargs):

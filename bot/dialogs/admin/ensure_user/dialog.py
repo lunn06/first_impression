@@ -13,8 +13,8 @@ from bot.dialogs.admin.ensure_user.getters import (
 from bot.dialogs.admin.ensure_user.handlers import (
     telegram_user_name_validator,
     select_super_type_handler,
-    super_id_on_success,
-    super_id_on_error,
+    super_name_on_success,
+    super_name_on_error,
     process_choose_button_handler
 )
 from bot.states import EnsureSuperStates
@@ -42,8 +42,8 @@ def get_dialog() -> Dialog:
         Format("{ensure_super_text}"),
         TextInput(
             type_factory=telegram_user_name_validator,
-            on_success=super_id_on_success,
-            on_error=super_id_on_error,
+            on_success=super_name_on_success,
+            on_error=super_name_on_error,
 
             id="ensure_super_text_input",
         ),

@@ -3,11 +3,11 @@ from typing import Annotated
 from aiogram.types import Update
 from fastapi import FastAPI, Header
 
-from bot.setup import setup_dp, setup_bot, setup_webhook
+from bot.setup import setup, setup_bot, setup_webhook
 
 
 async def get_app(config, logger) -> FastAPI:
-    dp = await setup_dp(config)
+    dp, _, _, _ = await setup(config)
     bot = await setup_bot(config)
     await setup_webhook(bot, config, logger)
 

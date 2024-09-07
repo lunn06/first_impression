@@ -1,9 +1,7 @@
 from aiogram_dialog import Dialog, Window, StartMode
 from aiogram_dialog.widgets.kbd import Start
-from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 from aiogram_dialog.widgets.text import Format
 
-from bot.dialogs.menu.handlers import delete_clicked_menu_button
 from bot.dialogs.menu.getters import menu_getter
 from bot.states import MenuStates, StatisticStates, SecretsStates, WhereToGoStates, SuperStates
 
@@ -33,7 +31,7 @@ def get_dialog() -> Dialog:
             Format("{start_where_to_go_button}"),
             id="start_where_to_go_section",
             # on_click=delete_clicked_menu_button,  # type: ignore
-            state=WhereToGoStates.locations,
+            state=WhereToGoStates.types,
             mode=StartMode.NORMAL,
         ),
 

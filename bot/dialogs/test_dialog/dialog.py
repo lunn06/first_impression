@@ -10,14 +10,15 @@ from aiogram_dialog.widgets.kbd import Multiselect, Select, Button, SwitchTo, St
 from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.text import List, Multi
 
-from bot.configs.questions import Questions
 from bot.dialogs.test_dialog.getters import (
     results_getter, description_getter, test_getter
 )
 from bot.dialogs.test_dialog.handlers import (
     on_click_multiselect_button_next, on_click_select, text_input_handler, ensure_test_handler,
+    process_back_to_menu_button,
 )
 from bot.states import BackToMenuStates, TestStates, MenuStates
+from configs import Questions
 
 
 def get_start_data(questions: Questions) -> dict[str, float]:
@@ -30,11 +31,15 @@ async def start_test_handler(
         dialog_manager: DialogManager,
         dialog_name: str,
 ) -> None:
+    session = dialog_manager.middleware_data["session"]
     questions: Questions = dialog_manager.middleware_data["questions_dict"][dialog_name]
     if isinstance(questions.guest_count, int):
         questions_count = questions.guest_count
     else:
         questions_count = len(questions)
+
+    # test = await get_test_by_name(session, dialog_name)
+    # assert test
 
     user_questions = deepcopy(questions)
     user_questions.questions = random.sample(questions.questions, questions_count)
@@ -44,9 +49,10 @@ async def start_test_handler(
         data={
             "dialog_name": dialog_name,
             "user_questions": user_questions.model_dump_json(),
-            "scores": get_start_data(questions),
-            "points_per_question": questions.coast / questions_count,
-            "points_per_test": questions.coast,
+            "right_answers": get_start_data(user_questions),
+            "questions_count": questions_count,
+            # "points_per_question": questions.coast / questions_count,
+            # "points_per_test": questions.coast,
         },
         mode=StartMode.NORMAL,
     )
@@ -109,6 +115,7 @@ def get_dialog() -> Dialog:
             Format("{back_to_menu_button_text}"),
             id="back_to_menu_button",
             state=BackToMenuStates.back_to_menu,
+            on_click=process_back_to_menu_button,  # type: ignore
             mode=StartMode.NORMAL,
         ),
 

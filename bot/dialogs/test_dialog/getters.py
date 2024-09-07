@@ -1,6 +1,8 @@
 from aiogram_dialog import DialogManager
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.configs.questions import Questions, QuestionsTypeEnum
+from bot.database.requests import get_test_by_name
+from configs import Questions, QuestionsTypeEnum
 
 RESULT_ROUND = 2
 
@@ -34,11 +36,33 @@ async def test_getter(dialog_manager: DialogManager, **_kwargs):
     }
 
 
-async def results_getter(dialog_manager: DialogManager, **_kwargs):
-    scores: dict[str, float] = dialog_manager.start_data["scores"]
-    test_total = dialog_manager.start_data["points_per_test"]
-    rounded_results = tuple(map(lambda x: (x[0], round(x[1], RESULT_ROUND)), scores.items()))
-    user_total = round(sum(scores.values()), RESULT_ROUND)
+async def results_getter(session: AsyncSession, dialog_manager: DialogManager, **_kwargs):
+    right_count_dict: dict[str, float] = dialog_manager.start_data["right_answers"]
+    right_count = round(sum(right_count_dict.values()), 3)
+    questions_count: int = dialog_manager.start_data["questions_count"]
+
+    questions_json = dialog_manager.start_data["user_questions"]
+    user_questions = Questions.model_validate_json(questions_json)
+
+    dialog_name = dialog_manager.start_data["dialog_name"]
+
+    test = await get_test_by_name(session, dialog_name)
+    assert test
+
+    limit_coast = user_questions.coast / (100 / user_questions.limit)
+    decreased_count = user_questions.coast - test.complete_count * user_questions.decrease
+    if decreased_count > limit_coast:
+        user_questions.coast = decreased_count
+    else:
+        user_questions.coast = limit_coast
+
+    points_per_question = user_questions.coast / questions_count
+    test_total = round(user_questions.coast, RESULT_ROUND)
+    rounded_results = tuple(map(
+        lambda x: (x[0], round(x[1] * points_per_question, RESULT_ROUND)),
+        right_count_dict.items()
+    ))
+    user_total = round(right_count * points_per_question, RESULT_ROUND)
 
     dialog_manager.dialog_data["result"] = user_total
 

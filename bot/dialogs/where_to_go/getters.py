@@ -1,11 +1,23 @@
 from aiogram_dialog import DialogManager
 
-from bot.configs.questions import Questions
+from configs import Questions, TestTypeEnum
+
+
+async def types_getter(dialog_manager: DialogManager, **_kwargs):
+    types = tuple(map(lambda v: v.value, TestTypeEnum))  # TODO: перенести в i18n
+    dialog_manager.dialog_data["types"] = types
+
+    return {
+        "text": "Выберите тип локации, которых хотите посетить",
+        "types": tuple(enumerate(map(lambda v: v.on_russian(), TestTypeEnum))),
+        "back_to_menu_button_text": "Назад",
+    }
 
 
 async def locations_getter(dialog_manager: DialogManager, **_kwargs):
     questions_dict: dict[str, Questions] = dialog_manager.middleware_data["questions_dict"]
-    locations_set = set(s.location for s in questions_dict.values())
+    selected_type = dialog_manager.dialog_data["selected_type"]
+    locations_set = set(s.location for s in questions_dict.values() if s.type == selected_type)
 
     dialog_manager.dialog_data["locations"] = tuple(locations_set)
 

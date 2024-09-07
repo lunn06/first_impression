@@ -18,9 +18,11 @@ class MenuStates(StatesGroup):
 
 class StatisticStates(StatesGroup):
     statistic = State()
+    top_users = State()
 
 
 class WhereToGoStates(StatesGroup):
+    types = State()
     locations = State()
     audiences = State()
     description = State()
@@ -36,8 +38,12 @@ class BackToMenuStates(StatesGroup):
 
 class SuperStates(StatesGroup):
     menu = State()
-    view_secrets = State()
     view_top = State()
+
+
+class ViewSecretsStates(StatesGroup):
+    user_secrets = State()
+    view_secret = State()
 
 
 class EnsureSuperStates(StatesGroup):
