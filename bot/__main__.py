@@ -21,7 +21,7 @@ async def main():
 
 if __name__ == "__main__":
     uvicorn.run(
-        app=main(),  # type: ignore
+        app=main,  # type: ignore
         port=config.port,
         loop="uvloop",
         interface="auto"
