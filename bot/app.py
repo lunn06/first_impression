@@ -23,10 +23,10 @@ async def get_app(config, logger) -> FastAPI:
                 session_maker=session_maker,
                 bot=bot
             )
+            yield
         except Exception as e:
             logger.exception(e)
         finally:
-            yield
             await nc.close()
 
     app = FastAPI(lifespan=lifespan)
