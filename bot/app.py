@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from aiogram.types import Update
@@ -28,11 +29,14 @@ async def get_app(config, logger) -> FastAPI:
     bot = await setup_bot(config)
     await setup_webhook(bot, config, logger)
 
-    await asyncio.create_task(
-        start_lifespan_broker(nc, js, config, dp, session_maker, bot, logger)
-    )
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        await asyncio.create_task(
+            start_lifespan_broker(nc, js, config, dp, session_maker, bot, logger)
+        )
+        yield
 
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
 
     @app.post(config.webhook_path)
     async def webhook(
