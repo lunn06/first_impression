@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from aiogram.types import Update
@@ -12,10 +13,8 @@ async def get_app(config, logger) -> FastAPI:
     bot = await setup_bot(config)
     await setup_webhook(bot, config, logger)
 
-    app = FastAPI()
-
-    @app.on_event("startup")
-    async def startup():
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
         try:
             await start_broker(
                 nc=nc, js=js,
@@ -26,10 +25,11 @@ async def get_app(config, logger) -> FastAPI:
             )
         except Exception as e:
             logger.exception(e)
+        finally:
+            yield
+            await nc.close()
 
-    @app.on_event("shutdown")
-    async def shutdown():
-        await nc.close()
+    app = FastAPI(lifespan=lifespan)
 
     @app.post(config.webhook_path)
     async def webhook(
