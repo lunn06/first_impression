@@ -21,5 +21,6 @@ if __name__ == "__main__":
             port=config.port,
             loop="uvloop",
             interface="auto",
+            reload=True,
             workers=2,
         )
