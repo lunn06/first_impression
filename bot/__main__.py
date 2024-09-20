@@ -11,20 +11,11 @@ config = parse_config()
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-
-async def main():
-    if config.debug_mode:
-        return await run_polling(config)
-    else:
-        app = await get_app(config, logger)
-        return app
-
-
 if __name__ == "__main__":
     if config.debug_mode:
-        uvloop.run(main())
+        uvloop.run(run_polling(config))
     else:
-        app = uvloop.run(main())
+        app = uvloop.run(get_app(config, logger))
         uvicorn.run(
             app=app,  # type: ignore
             port=config.port,

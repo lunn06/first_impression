@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -16,13 +17,13 @@ async def get_app(config, logger) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         try:
-            await start_broker(
+            await asyncio.create_task(start_broker(
                 nc=nc, js=js,
                 config=config,
                 cache=dp["cache"],
                 session_maker=session_maker,
                 bot=bot
-            )
+            ))
         except Exception as e:
             logger.exception(e)
 
