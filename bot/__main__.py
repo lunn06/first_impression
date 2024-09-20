@@ -20,5 +20,6 @@ if __name__ == "__main__":
             app=app,  # type: ignore
             port=config.port,
             loop="uvloop",
-            interface="auto"
+            interface="auto",
+            workers=2,
         )
