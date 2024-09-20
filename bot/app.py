@@ -1,4 +1,4 @@
-import asyncio
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from aiogram.types import Update
@@ -13,7 +13,22 @@ async def get_app(config, logger) -> FastAPI:
     bot = await setup_bot(config)
     await setup_webhook(bot, config, logger)
 
-    app = FastAPI()
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        try:
+            await start_broker(
+                nc=nc, js=js,
+                config=config,
+                cache=dp["cache"],
+                session_maker=session_maker,
+                bot=bot
+            )
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            await nc.close()
+
+    app = FastAPI(lifespan=lifespan)
 
     @app.post(config.webhook_path)
     async def webhook(
@@ -23,25 +38,7 @@ async def get_app(config, logger) -> FastAPI:
         """ Register webhook endpoint for telegram bot"""
         if secret_token != config.telegram_secret_token:
             logger.error("Wrong secret token !")
-            return {"status": "error", "message": "Wrong secret token !"}
+            return {"status": "error", "message": "Wrong secret token!"}
         await dp.feed_webhook_update(bot=bot, update=request)
 
-    async def start():
-        try:
-            await asyncio.gather(
-                dp.start_polling(bot),
-
-                start_broker(
-                    nc=nc, js=js,
-                    config=config,
-                    cache=dp["cache"],
-                    session_maker=session_maker,
-                    bot=bot
-                )
-            )
-        except Exception as e:
-            logger.exception(e)
-        finally:
-            await nc.close()
-
-    return start
+    return app
