@@ -2,6 +2,7 @@ import logging
 
 from nats.aio.msg import Msg
 from nats.js import JetStreamContext
+from orjson import orjson
 from redis.asyncio import Redis
 
 from bot.database.cached_requests import ensure_top_users
@@ -34,9 +35,9 @@ class TopUsersConsumer:
         )
 
     async def on_message(self, msg: Msg):
-        sent_time = msg.headers.get('Tg-Delayed-Msg-Timestamp')
+        sent_time = float(msg.headers.get('Tg-Delayed-Msg-Timestamp'))
 
-        top_users = msg.data
+        top_users = orjson.loads(msg.data)
         await ensure_top_users(self.cache, top_users, sent_time)  # type: ignore
 
     async def unsubscribe(self) -> None:

@@ -114,7 +114,7 @@ async def setup(config: Config) -> (Dispatcher, Client, JetStreamContext):
     session_maker = await setup_db(dp, config, questions_dict)
     await setup_notifications(dp, config, nc, session_maker)
 
-    dp.message.middleware(AntiFloodMiddleware(config.flood_awaiting))
+    dp.update.middleware(AntiFloodMiddleware(config.flood_awaiting, cache=Redis(db=0)))
 
     dp["config"] = config
     dp["secrets_dict"] = secrets_dict

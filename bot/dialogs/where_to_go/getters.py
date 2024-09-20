@@ -1,16 +1,30 @@
+from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
+from aiogram_dialog.api.entities import MediaAttachment
 
-from configs import Questions, TestTypeEnum
+from configs import Questions, TestTypeEnum, Config
+from configs.config import LocationMode
 
 
-async def types_getter(dialog_manager: DialogManager, **_kwargs):
+async def types_or_map_getter(dialog_manager: DialogManager, config: Config, **_kwargs):
     types = tuple(map(lambda v: v.value, TestTypeEnum))  # TODO: перенести в i18n
     dialog_manager.dialog_data["types"] = types
 
+    map_attachment = None
+    if config.location_mode == LocationMode.picture:
+        assert config.map_path is not None
+        map_attachment = MediaAttachment(ContentType.PHOTO, path=str(config.map_path))
+
     return {
-        "text": "Выберите тип локации, которых хотите посетить",
+        "buttons_text": "Выберите тип локации, которых хотите посетить",
+        "map_text": "Выбирай куда пойти!",
+        "map": map_attachment,
+
         "types": tuple(enumerate(map(lambda v: v.on_russian(), TestTypeEnum))),
         "back_to_menu_button_text": "Назад",
+
+        "is_map_mode": config.location_mode == LocationMode.picture,
+        "is_buttons_mode": config.location_mode == LocationMode.buttons,
     }
 
 

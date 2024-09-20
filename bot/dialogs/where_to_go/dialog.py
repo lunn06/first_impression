@@ -2,17 +2,23 @@ import operator
 
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import Cancel, ScrollingGroup, Select, SwitchTo, Group
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
-from bot.dialogs.where_to_go.getters import locations_getter, audiences_getter, description_getter, types_getter
+from bot.dialogs.where_to_go.getters import locations_getter, audiences_getter, description_getter, types_or_map_getter
 from bot.dialogs.where_to_go.handlers import select_locations_on_click, select_audience_on_click, select_types_on_click
 from bot.states import WhereToGoStates
 
 
 def get_dialog() -> Dialog:
-    types_window = Window(
-        Format("{text}"),
+    types_or_map_window = Window(
+        Format("{map_text}"),
+        DynamicMedia(
+            "map",
+            when="is_map_mode"
+        ),
 
+        Format("{buttons_text}", when="is_buttons_mode"),
         Group(
             Select(
                 Format("{item[1]}"),
@@ -22,6 +28,7 @@ def get_dialog() -> Dialog:
                 on_click=select_types_on_click
             ),
             width=2,
+            when="is_buttons_mode"
         ),
 
         Cancel(
@@ -29,8 +36,8 @@ def get_dialog() -> Dialog:
             id="back_to_menu",
         ),
 
-        getter=types_getter,
-        state=WhereToGoStates.types,
+        getter=types_or_map_getter,
+        state=WhereToGoStates.types_or_map,
     )
 
     locations_window = Window(
@@ -52,7 +59,7 @@ def get_dialog() -> Dialog:
         SwitchTo(
             Const("Назад"),
             id="back_to_types",
-            state=WhereToGoStates.types,
+            state=WhereToGoStates.types_or_map,
             # mode=StartMode.RESET_STACK,
         ),
 
@@ -99,7 +106,7 @@ def get_dialog() -> Dialog:
     )
 
     dialog = Dialog(
-        types_window,
+        types_or_map_window,
         locations_window,
         audiences_window,
         description_window,

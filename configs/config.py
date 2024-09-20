@@ -1,11 +1,18 @@
+from enum import StrEnum
 from functools import lru_cache
+from typing import Optional
 
 from environs import Env
-from pydantic import SecretStr, DirectoryPath, PositiveFloat, MySQLDsn, NatsDsn, PositiveInt
+from pydantic import SecretStr, DirectoryPath, PositiveFloat, MySQLDsn, NatsDsn, PositiveInt, Field, FilePath
 from pydantic_settings import BaseSettings
 
 env = Env()
 env.read_env()
+
+
+class LocationMode(StrEnum):
+    buttons = "buttons"
+    picture = "picture"
 
 
 class Config(BaseSettings):
@@ -34,11 +41,13 @@ class Config(BaseSettings):
 
     flood_awaiting: PositiveFloat
     top_getting_delay: PositiveInt
+    location_mode: LocationMode = Field(default=LocationMode.buttons)
 
     telegram_secret_token: str
 
     locales_path: DirectoryPath
     models_path: DirectoryPath
+    map_path: Optional[FilePath]
 
     admins: list[int]
 

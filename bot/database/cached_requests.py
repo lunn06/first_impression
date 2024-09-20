@@ -10,27 +10,20 @@ from bot.database.requests import (
 )
 
 
-async def ensure_top_users(cache: Redis, top_users: str, sent_time: datetime):
-    # now = datetime.datetime.now(tz=datetime.timezone.utc)
-    # key = f"top:{now.date()}:{now.hour}:{now.minute}"
-    # for user in top_users:
-    #     await cache.append(
-    #         key,
-    #         orjson.dumps(
-    #             (user.user_name, float(user.user_points))
-    #         )
-    #     )  # type: ignore
-    #
-    if await cache.exists("last_top"):
-        await cache.delete("last_top")
-        await cache.delete("last_top_time")
-    await cache.setnx("last_top", top_users)
-    await cache.setnx("last_top_time", sent_time)
+async def ensure_top_users(cache: Redis, top_users: tuple[tuple[str, float]], sent_time: float):
+    async with cache.pipeline(transaction=True) as pipe:
+        await pipe.delete("last_top")
+        for item in top_users:
+            await pipe.rpush("last_top", orjson.dumps(item))  # type: ignore
+        await pipe.set("last_top_time", sent_time)
+
+        await pipe.execute()
 
 
 async def get_top_users(cache: Redis) -> (str, tuple[tuple[str, ...], datetime]):
     # last_top = await cache.get("last_top")
-    top_users_str = orjson.loads(await cache.get("last_top"))
+    top_users_list = await cache.lrange("last_top", 0, -1)  # type: ignore
+    top_users_str = [orjson.loads(item) for item in top_users_list]
     top_time = datetime.datetime.fromtimestamp(
         float(await cache.get("last_top_time")),
         tz=datetime.timezone(datetime.timedelta(hours=7))

@@ -22,7 +22,7 @@ class StatisticStates(StatesGroup):
 
 
 class WhereToGoStates(StatesGroup):
-    types = State()
+    types_or_map = State()
     locations = State()
     audiences = State()
     description = State()

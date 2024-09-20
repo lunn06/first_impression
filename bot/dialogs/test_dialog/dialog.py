@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from aiogram import F
 from aiogram.types import CallbackQuery
-from aiogram_dialog import Dialog, Window, DialogManager, StartMode
+from aiogram_dialog import Dialog, Window, DialogManager, StartMode, LaunchMode
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.kbd import Multiselect, Select, Button, SwitchTo, Start
 from aiogram_dialog.widgets.text import Format, Const
@@ -15,7 +15,7 @@ from bot.dialogs.test_dialog.getters import (
 )
 from bot.dialogs.test_dialog.handlers import (
     on_click_multiselect_button_next, on_click_select, text_input_handler, ensure_test_handler,
-    process_back_to_menu_button,
+    process_back_to_menu_button, on_click_info_button_next, on_click_description
 )
 from bot.states import BackToMenuStates, TestStates, MenuStates
 from configs import Questions
@@ -31,7 +31,7 @@ async def start_test_handler(
         dialog_manager: DialogManager,
         dialog_name: str,
 ) -> None:
-    session = dialog_manager.middleware_data["session"]
+    # session = dialog_manager.middleware_data["session"]
     questions: Questions = dialog_manager.middleware_data["questions_dict"][dialog_name]
     if isinstance(questions.guest_count, int):
         questions_count = questions.guest_count
@@ -61,10 +61,10 @@ async def start_test_handler(
 def get_dialog() -> Dialog:
     description_window = Window(
         Format("{text}"),
-        SwitchTo(
+        Button(
             Format("{next_text}"),
             id="switch_to_test",
-            state=TestStates.test
+            on_click=on_click_description
         ),
 
         getter=description_getter,
@@ -106,6 +106,13 @@ def get_dialog() -> Dialog:
             when="is_select"
         ),
 
+        Button(
+            Format("{button_next_text}"),
+            id="info_next_button",
+            on_click=on_click_info_button_next,
+            when="is_info",
+        ),
+
         TextInput(
             id="text_question",
             on_success=text_input_handler,
@@ -117,6 +124,7 @@ def get_dialog() -> Dialog:
             state=BackToMenuStates.back_to_menu,
             on_click=process_back_to_menu_button,  # type: ignore
             mode=StartMode.NORMAL,
+            when=F.is_info
         ),
 
         state=TestStates.test,
@@ -150,6 +158,8 @@ def get_dialog() -> Dialog:
         description_window,
         test_window,
         result_window,
+
+        # launch_mode=LaunchMode.SINGLE_TOP
     )
 
     return dialog

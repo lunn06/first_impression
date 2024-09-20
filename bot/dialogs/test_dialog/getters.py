@@ -1,24 +1,26 @@
-from aiogram_dialog import DialogManager
+from aiogram.types import User
+from aiogram_dialog import DialogManager, StartMode
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.requests import get_test_by_name
+from bot.database.requests import get_test_by_name, ensure_user_test
+from bot.states import MenuStates
 from configs import Questions, QuestionsTypeEnum
 
 RESULT_ROUND = 2
 
 
 async def description_getter(dialog_manager: DialogManager, **_kwargs):
-    questions_json = dialog_manager.start_data["user_questions"]
+    questions_json = dialog_manager.start_data["user_questions"]  # type: ignore
     questions = Questions.model_validate_json(questions_json)
 
     return {
         "text": questions.description,
-        "next_text": "Начнём!"
+        "next_text": "Понял!" if questions.only_info else "Начнём!"
     }
 
 
-async def test_getter(dialog_manager: DialogManager, **_kwargs):
-    questions_json = dialog_manager.start_data["user_questions"]
+async def test_getter(dialog_manager: DialogManager, event_from_user: User, **_kwargs):
+    questions_json = dialog_manager.start_data["user_questions"]  # type: ignore
     questions = Questions.model_validate_json(questions_json)
     question_index: int = dialog_manager.dialog_data.get("question_index", 0)
 
@@ -33,18 +35,19 @@ async def test_getter(dialog_manager: DialogManager, **_kwargs):
         "is_multiselect": current_question.type == QuestionsTypeEnum.multiselect,
         "is_select": current_question.type == QuestionsTypeEnum.select,
         "is_text": current_question.type == QuestionsTypeEnum.text,
+        "is_info": current_question.type == QuestionsTypeEnum.info,
     }
 
 
 async def results_getter(session: AsyncSession, dialog_manager: DialogManager, **_kwargs):
-    right_count_dict: dict[str, float] = dialog_manager.start_data["right_answers"]
+    right_count_dict: dict[str, float] = dialog_manager.start_data["right_answers"]  # type: ignore
     right_count = round(sum(right_count_dict.values()), 3)
-    questions_count: int = dialog_manager.start_data["questions_count"]
+    questions_count: int = dialog_manager.start_data["questions_count"]  # type: ignore
 
-    questions_json = dialog_manager.start_data["user_questions"]
+    questions_json = dialog_manager.start_data["user_questions"]  # type: ignore
     user_questions = Questions.model_validate_json(questions_json)
 
-    dialog_name = dialog_manager.start_data["dialog_name"]
+    dialog_name = dialog_manager.start_data["dialog_name"]  # type: ignore
 
     test = await get_test_by_name(session, dialog_name)
     assert test

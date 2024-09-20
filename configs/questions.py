@@ -26,62 +26,92 @@ class Defaults:
 
 
 class TestTypeEnum(StrEnum):
-    lecture = "lecture"
-    museum = "museum"
-    sport = "sport"
-    laboratory = "laboratory"
-    building = "building"
+    # lecture = "lecture"
+    # museum = "museum"
+    # sport = "sport"
+    # laboratory = "laboratory"
+    # building = "building"
+    # other = "other"
+    special = "special"
+    usual = "usual"
 
     def on_russian(self):
         match self:
-            case self.lecture:
-                return "Лекция"
-            case self.museum:
-                return "Музей"
-            case self.sport:
-                return "Спорт"
-            case self.laboratory:
-                return "Лаборатория"
-            case self.building:
-                return "Корпус"
+            case self.special:
+                return "Специальная"
+            case self.usual:
+                return "Обычная"
+            # case self.lecture:
+            #     return "Лекция"
+            # case self.museum:
+            #     return "Музей"
+            # case self.sport:
+            #     return "Спорт"
+            # case self.laboratory:
+            #     return "Лаборатория"
+            # case self.building:
+            #     return "Корпус"
+            # case self.other:
+            #     return "Другое"
 
     def default(self):
         match self:
-            case self.lecture:
+            case self.special:
                 return Defaults(
                     decrease=0,
-                    interval=int(HOUR * 1.5),
-                    coast=0,
+                    interval=60,
+                    coast=1,
                     limit=50,
                 )
-            case self.museum:
-                return Defaults(
-                    decrease=0.01,
-                    interval=DAY,
-                    coast=0,
-                    limit=50,
-                )
-            case self.sport:
+            case self.usual:
                 return Defaults(
                     decrease=0,
-                    interval=HOUR,
-                    coast=0,
+                    interval=30,
+                    coast=1,
                     limit=50,
                 )
-            case self.laboratory:
-                return Defaults(
-                    decrease=0.01,
-                    interval=DAY,
-                    coast=0,
-                    limit=50,
-                )
-            case self.building:
-                return Defaults(
-                    decrease=0.01,
-                    interval=DAY,
-                    coast=0,
-                    limit=50,
-                )
+            # case self.lecture:
+            #     return Defaults(
+            #         decrease=0,
+            #         interval=int(HOUR * 1.5),
+            #         coast=0,
+            #         limit=50,
+            #     )
+            # case self.museum:
+            #     return Defaults(
+            #         decrease=0.01,
+            #         interval=DAY,
+            #         coast=0,
+            #         limit=50,
+            #     )
+            # case self.sport:
+            #     return Defaults(
+            #         decrease=0,
+            #         interval=HOUR,
+            #         coast=0,
+            #         limit=50,
+            #     )
+            # case self.laboratory:
+            #     return Defaults(
+            #         decrease=0.01,
+            #         interval=DAY,
+            #         coast=0,
+            #         limit=50,
+            #     )
+            # case self.building:
+            #     return Defaults(
+            #         decrease=0.01,
+            #         interval=DAY,
+            #         coast=0,
+            #         limit=50,
+            #     )
+            # case self.other:
+            #     return Defaults(
+            #         decrease=0.00,
+            #         interval=30,
+            #         coast=0,
+            #         limit=50,
+            #     )
 
 
 class Questions(BaseModel):
@@ -90,6 +120,7 @@ class Questions(BaseModel):
     type: TestTypeEnum
     location: str
     audience: str
+    only_info: bool = Field(default=False)
 
     interval: PositiveInt
     coast: PositiveFloat
@@ -121,6 +152,7 @@ class QuestionsTypeEnum(StrEnum):
     multiselect = "multiselect"
     select = "select"
     text = "text"
+    info = "info"
 
 
 def _questions_from_json(questions_json: dict[Any, Any]) -> Questions:

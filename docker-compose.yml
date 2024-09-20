@@ -1,16 +1,32 @@
 version: '3'
 
 services:
-  #  bot:
-  #    build:
-  #      context: .
-  #    deploy:
-  #      replicas: 1
-  #    restart: always
-  #    depends_on:
-  #      - mysql
-  #      - dragonfly
-  #      - nats
+#  bot:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    deploy:
+#      replicas: 1
+#    restart: always
+#    environment:
+#      BOT_TOKEN: "7360303774:AAEuj7nKEPJhUxR0J-GJACwCr6kd002aYok"
+#      DB_URL: "mysql+aiomysql://root:password@localhost:9006/impression_db"
+#      DEBUG_MODE: true
+#      EMPTY_DB: true
+#      LOCALES_PATH: "/app/bot/locales"
+#      MODELS_PATH: "/app/models"
+#      WEBHOOK_URL: "http://lemonade-bot-test.freemyip.com"
+#      WEBHOOK_PATH: "/webhook"
+#      PORT: 9003
+#      TELEGRAM_SECRET_TOKEN: "jhasdlha9812347123bgjklhsfg8675t123g12hjervsauDFC851673"
+#      FLOOD_AWAITING: 0.69
+#      ADMINS: "[430490262]"
+#    volumes:
+#      - ./deploydata/secrets:/app/secrets
+#    depends_on:
+#      - mysql
+#      - dragonfly
+#      - nats
 
   dragonfly:
     image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
@@ -23,10 +39,10 @@ services:
     # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
     # network_mode: "host"
     volumes:
-      - ./deploydata/dragonflydata:/data
+      - ./deploydata/dragonfly:/data
 
   mysql:
-    image: mysql:latest
+    image: mysql:9.0
     restart: always
     ports:
       - "9006:3306"
@@ -34,7 +50,7 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: impression_db
     volumes:
-      - ./deploydata/mysqldata:/data
+      - ./deploydata/mysql:/var/lib/mysql
 
   nats:
     image: nats:latest

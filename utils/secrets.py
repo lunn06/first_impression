@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import os
+import base64
+from hashlib import sha256
+
 
 import qrcode  # type: ignore
 from pyotp import TOTP
@@ -22,8 +25,9 @@ class Secret:
         return self.totp.verify(code)
 
     def _generate_secret(self, interval: int) -> TOTP:
-        totp = TOTP(self.secret, interval=interval)
-        uri = totp.provisioning_uri(name=self.name, issuer_name="Надо придумать название")
+        base = base64.b32encode(self.secret.encode())
+        totp = TOTP(base.decode(), interval=interval)
+        uri = totp.provisioning_uri(name=self.name, issuer_name="День программиста")
 
         if not os.path.exists(Secret.DIR):
             os.makedirs(Secret.DIR)
