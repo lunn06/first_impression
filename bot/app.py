@@ -1,22 +1,18 @@
+import asyncio
 from typing import Annotated
 
 from aiogram.types import Update
 from fastapi import FastAPI, Header
 
 from bot.setup import setup, setup_bot, setup_webhook
+from utils.start_broker import start_broker
 
 
 async def get_app(config, logger) -> FastAPI:
-    dp, _, _, _ = await setup(config)
+    dp, nc, js, session_maker = await setup(config)
     bot = await setup_bot(config)
     await setup_webhook(bot, config, logger)
 
-    # @asynccontextmanager  # type: ignore
-    # async def lifespan(_app: FastAPI):
-    #     await setup_webhook(bot, config, logger)
-    #     yield
-
-    # app = FastAPI(lifespan=lifespan)  # type: ignore
     app = FastAPI()
 
     @app.post(config.webhook_path)
@@ -30,4 +26,22 @@ async def get_app(config, logger) -> FastAPI:
             return {"status": "error", "message": "Wrong secret token !"}
         await dp.feed_webhook_update(bot=bot, update=request)
 
-    return app
+    async def start():
+        try:
+            await asyncio.gather(
+                dp.start_polling(bot),
+
+                start_broker(
+                    nc=nc, js=js,
+                    config=config,
+                    cache=dp["cache"],
+                    session_maker=session_maker,
+                    bot=bot
+                )
+            )
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            await nc.close()
+
+    return start
