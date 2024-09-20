@@ -51,7 +51,7 @@ async def get_app(config, logger) -> FastAPI:
             return {"status": "error", "message": "Wrong secret token!"}
         await dp.feed_webhook_update(bot=bot, update=request)
 
-    return asyncio.gather(
+    return await asyncio.gather(
         app,
         start_lifespan_broker(nc, js, config, dp, session_maker, bot, logger)
     )
