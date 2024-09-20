@@ -14,4 +14,4 @@ if __name__ == "__main__":
     if config.debug_mode:
         uvloop.run(run_polling(config))
     else:
-        uvloop.run(get_app(config, logger))
+        uvloop.run(get_app(config, logger), debug=True)

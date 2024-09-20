@@ -27,8 +27,8 @@ async def get_app(config, logger):
             return {"status": "error", "message": "Wrong secret token!"}
         await dp.feed_webhook_update(bot=bot, update=request)
 
-    config = uvicorn.Config(app, port=config.port)
-    server = uvicorn.Server(config)
+    server_config = uvicorn.Config(app, port=config.port)
+    server = uvicorn.Server(server_config)
 
     try:
         await asyncio.gather(
