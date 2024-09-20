@@ -16,11 +16,10 @@ if __name__ == "__main__":
         uvloop.run(run_polling(config))
     else:
         app = uvloop.run(get_app(config, logger))
+        print("GOGOGOGOOG")
         uvicorn.run(
             app=app,  # type: ignore
             port=config.port,
             loop="uvloop",
             interface="auto",
-            reload=True,
-            workers=2,
         )
