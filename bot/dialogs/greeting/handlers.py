@@ -1,5 +1,5 @@
 from aiogram.types import CallbackQuery
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, StartMode
 from aiogram_dialog.widgets.kbd import Button
 
 from bot.database.requests import ensure_user, get_super_by_id
@@ -21,8 +21,8 @@ async def on_click_greeting_button(callback: CallbackQuery, _button: Button, man
         is_moderator=is_moderator
     )
 
-    oauth_credentials = manager.start_data.get("oauth", None)
-    if oauth_credentials is None:
-        await manager.switch_to(GreetingStates.auth)
-    else:
-        await manager.switch_to(MenuStates.menu)
+    # oauth_credentials = manager.start_data.get("oauth", None)
+    # if oauth_credentials is None:
+    #     await manager.switch_to(GreetingStates.auth)
+    # else:
+    await manager.start(MenuStates.menu, mode=StartMode.RESET_STACK)

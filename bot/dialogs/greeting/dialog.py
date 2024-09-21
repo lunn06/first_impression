@@ -2,6 +2,7 @@ from aiogram.filters import CommandObject
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager, StartMode
 from aiogram_dialog.widgets.kbd import Button, Url, Start
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Format
 
 from bot.dialogs.greeting.getters import greeting_getter, auth_getter
@@ -20,6 +21,7 @@ async def start_handler(message: CallbackQuery, command: CommandObject, dialog_m
 
 def get_dialog() -> Dialog:
     greeting_window = Window(
+        DynamicMedia("pic"),
         Format("{text}"),
         Button(
             Format("{start_button_text}"),

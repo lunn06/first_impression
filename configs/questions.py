@@ -59,8 +59,8 @@ class TestTypeEnum(StrEnum):
             case self.special:
                 return Defaults(
                     decrease=0,
-                    interval=60,
-                    coast=1,
+                    interval=30,
+                    coast=3,
                     limit=50,
                 )
             case self.usual:

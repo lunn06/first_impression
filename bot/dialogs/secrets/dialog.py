@@ -1,6 +1,7 @@
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.kbd import Cancel
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Format
 
 from bot.dialogs.secrets.getters import secrets_getter
@@ -10,6 +11,7 @@ from bot.states import SecretsStates
 
 def get_dialog() -> Dialog:
     secrets_window = Window(
+        DynamicMedia("pic"),
         Format("{text}"),
         Cancel(
             Format("{back_to_menu_button_text}"),

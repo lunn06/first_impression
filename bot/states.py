@@ -19,6 +19,7 @@ class MenuStates(StatesGroup):
 class StatisticStates(StatesGroup):
     statistic = State()
     top_users = State()
+    user_tests = State()
 
 
 class WhereToGoStates(StatesGroup):

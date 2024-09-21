@@ -43,7 +43,7 @@ async def get_user_by_user_name(session: AsyncSession, user_name: str) -> User |
     return await session.scalar(stmt)
 
 
-async def get_user_tests(session: AsyncSession, user_id: int) -> list[str]:
+async def get_user_tests(session: AsyncSession, user_id: int) -> list[UserTest]:
     stmt = select(UserTest).where(UserTest.telegram_id == user_id)
     res = await session.execute(stmt)
 

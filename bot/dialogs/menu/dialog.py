@@ -1,5 +1,6 @@
 from aiogram_dialog import Dialog, Window, StartMode, LaunchMode
-from aiogram_dialog.widgets.kbd import Start, Button
+from aiogram_dialog.widgets.kbd import Start
+from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Format
 
 from bot.dialogs.menu.getters import menu_getter
@@ -8,6 +9,7 @@ from bot.states import MenuStates, StatisticStates, SecretsStates, WhereToGoStat
 
 def get_dialog() -> Dialog:
     menu_window = Window(
+        DynamicMedia("pic"),
         Format("{text}"),
 
         Start(
@@ -23,6 +25,7 @@ def get_dialog() -> Dialog:
             Format("{start_statistics_button}"),
             id="start_statistic_section",
             # on_click=delete_clicked_menu_button,  # type: ignore
+            # state=StatisticStates.statistic,
             state=StatisticStates.statistic,
             mode=StartMode.NORMAL,
         ),
@@ -55,4 +58,3 @@ def get_dialog() -> Dialog:
         menu_window,
         launch_mode=LaunchMode.ROOT
     )
-

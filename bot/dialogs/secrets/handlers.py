@@ -38,7 +38,8 @@ async def text_input_on_success(
     for dialog_name, secret in secrets_dict.items():
         if secret.verify(text):
             user_tests = await get_user_tests(session, message.from_user.id)
-            if dialog_name in user_tests:
+            user_tests_str = [test.test_name for test in user_tests]
+            if dialog_name in user_tests_str:
                 await message.answer("Это точку ты уже проходил!")
                 wrong = True
             else:

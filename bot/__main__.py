@@ -12,6 +12,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
     if config.debug_mode:
-        uvloop.run(run_polling(config))
+        uvloop.run(run_polling(config), debug=config.debug_mode)
     else:
-        uvloop.run(get_app(config, logger), debug=True)
+        uvloop.run(get_app(config, logger), debug=config.debug_mode)

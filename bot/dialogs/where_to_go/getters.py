@@ -1,12 +1,18 @@
+from typing import TYPE_CHECKING
+
 from aiogram.enums import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
+from fluentogram import TranslatorRunner
 
 from configs import Questions, TestTypeEnum, Config
 from configs.config import LocationMode
 
+if TYPE_CHECKING:
+    from bot.locales.stub import TranslatorRunner
 
-async def types_or_map_getter(dialog_manager: DialogManager, config: Config, **_kwargs):
+
+async def types_or_map_getter(dialog_manager: DialogManager, config: Config, i18n: TranslatorRunner, **_kwargs):
     types = tuple(map(lambda v: v.value, TestTypeEnum))  # TODO: перенести в i18n
     dialog_manager.dialog_data["types"] = types
 
@@ -17,11 +23,11 @@ async def types_or_map_getter(dialog_manager: DialogManager, config: Config, **_
 
     return {
         "buttons_text": "Выберите тип локации, которых хотите посетить",
-        "map_text": "Выбирай куда пойти!",
+        "map_text": i18n.wheretogo.message(),
         "map": map_attachment,
 
         "types": tuple(enumerate(map(lambda v: v.on_russian(), TestTypeEnum))),
-        "back_to_menu_button_text": "Назад",
+        "back_to_menu_button_text": i18n.back.to.menu.button(),
 
         "is_map_mode": config.location_mode == LocationMode.picture,
         "is_buttons_mode": config.location_mode == LocationMode.buttons,

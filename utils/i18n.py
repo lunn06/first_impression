@@ -21,7 +21,9 @@ def create_translator_hub(locales_path: DirectoryPath) -> TranslatorHub:
                 locale="ru",
                 translator=FluentBundle.from_files(
                     locale="ru-RU",
-                    filenames=filenames)),
+                    filenames=filenames
+                )
+            ),
         ],
         root_locale="ru",
     )

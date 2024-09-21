@@ -43,6 +43,11 @@ class Config(BaseSettings):
     top_getting_delay: PositiveInt
     location_mode: LocationMode = Field(default=LocationMode.buttons)
 
+    greeting_pic: Optional[FilePath]
+    menu_pic: Optional[FilePath]
+    secrets_pic: Optional[FilePath]
+    top_users_pic: Optional[FilePath]
+
     telegram_secret_token: str
 
     locales_path: DirectoryPath
